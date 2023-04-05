@@ -1,4 +1,12 @@
-module Express.Http exposing (Body(..), Method(..), Status(..), bodyToMIMEType, encodeBody, statusToCode, stringToMethod)
+module Express.Http exposing
+    ( Body(..)
+    , Method(..)
+    , Status(..)
+    , bodyToMIMEType
+    , encodeBody
+    , statusToCode
+    , stringToMethod
+    )
 
 import Dict
 import Json.Encode as E

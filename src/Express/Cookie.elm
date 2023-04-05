@@ -3,8 +3,8 @@ module Express.Cookie exposing
     , SameSite(..)
     , domain
     , encode
-    , maxAge
     , httpOnly
+    , maxAge
     , new
     , path
     , sameSite
@@ -13,7 +13,6 @@ module Express.Cookie exposing
     )
 
 import Express.Request as Request
-import Html.Attributes exposing (name, value)
 import Json.Encode as E
 
 

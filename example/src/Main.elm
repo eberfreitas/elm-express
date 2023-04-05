@@ -1,8 +1,10 @@
 port module Main exposing (main)
 
-import Express exposing (Conn)
+import Dict
+import Express
+import Express.Conn as Conn
 import Express.Cookie as Cookie
-import Express.Http as Http exposing (Method(..))
+import Express.Http as Http
 import Express.Request as Request
 import Express.Response as Response
 import Json.Decode as D
@@ -56,7 +58,7 @@ encodeToPortReverse id text =
     E.object [ ( "requestId", E.string id ), ( "text", E.string text ) ]
 
 
-init : Request.Request -> Response.Response -> ( Express.Conn Model, Cmd Msg )
+init : Request.Request -> Response.Response -> ( Conn.Conn Model, Cmd Msg )
 init request response =
     let
         requestId =
@@ -73,24 +75,24 @@ init request response =
 
         ( nextResponse, cmd ) =
             case ( requestMethod, model ) of
-                ( GET, HelloWorld ) ->
+                ( Http.GET, HelloWorld ) ->
                     let
                         res =
                             response |> Response.text "Hello world!"
                     in
                     ( res, respond res )
 
-                ( GET, Reverse text ) ->
+                ( Http.GET, Reverse text ) ->
                     let
                         res =
                             response |> Response.text (String.reverse text)
                     in
                     ( res, respond res )
 
-                ( GET, PortReverse text ) ->
+                ( Http.GET, PortReverse text ) ->
                     ( response, requestReverse <| encodeToPortReverse requestId text )
 
-                ( GET, Cookies ) ->
+                ( Http.GET, Cookies ) ->
                     let
                         cookiesValue =
                             request
@@ -102,7 +104,7 @@ init request response =
                     in
                     ( res, respond res )
 
-                ( GET, SetCookie name value ) ->
+                ( Http.GET, SetCookie name value ) ->
                     let
                         cookie =
                             Cookie.new request name value Nothing
@@ -112,7 +114,7 @@ init request response =
                     in
                     ( res, respond res )
 
-                ( GET, UnsetCookie name ) ->
+                ( Http.GET, UnsetCookie name ) ->
                     let
                         res =
                             request
@@ -138,26 +140,43 @@ subscriptions =
     gotReverse GotReverse
 
 
-update : Msg -> Express.Model Model -> ( Result (Express.AppError err) (Conn Model), Cmd Msg )
+portHelper :
+    Conn.Pool Model
+    -> D.Decoder a
+    -> (Conn.Conn Model -> a -> ( Conn.Conn Model, Cmd.Cmd Msg ))
+    -> E.Value
+    -> ( Maybe (Conn.Conn Model), Cmd.Cmd Msg )
+portHelper pool decoder fn raw =
+    raw
+        |> D.decodeValue (D.field "id" D.string)
+        |> Result.toMaybe
+        |> Maybe.andThen (\id -> Dict.get id pool)
+        |> Maybe.andThen (\conn -> raw |> D.decodeValue decoder |> Result.toMaybe |> Maybe.map (fn conn))
+        |> Maybe.map (\( conn, cmds ) -> ( Just conn, cmds ))
+        |> Maybe.withDefault ( Nothing, Cmd.none )
+
+
+update : Msg -> Conn.Pool Model -> ( Maybe (Conn.Conn Model), Cmd Msg )
 update msg pool =
     case msg of
         GotReverse raw ->
-            let
-                reverse conn data =
-                    let
-                        nextResponse =
-                            conn.response |> Response.text data
+            raw
+                |> portHelper pool
+                    (D.field "reversed" D.string)
+                    (\conn reversed ->
+                        let
+                            nextResponse =
+                                conn.response |> Response.text reversed
 
-                        nextConn =
-                            { conn | response = nextResponse } |> Result.Ok
-                    in
-                    ( nextConn
-                    , nextResponse
-                        |> Response.send (Request.id conn.request)
-                        |> responsePort
+                            nextConn =
+                                { conn | response = nextResponse }
+                        in
+                        ( nextConn
+                        , nextResponse
+                            |> Response.send (Request.id conn.request)
+                            |> responsePort
+                        )
                     )
-            in
-            Express.portHelper pool raw (D.field "reversed" D.string) reverse
 
 
 main : Program () (Express.Model Model) (Express.Msg Msg)
