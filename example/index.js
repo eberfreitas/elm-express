@@ -5,7 +5,13 @@ const { Elm } = require("./build/main");
 const port = 3000;
 const app = Elm.Main.init();
 const secret = "p4ssw0rd";
-const server = elmExpress({ app, secret, port });
+
+const sessionConfig = {
+  resave: false,
+  saveUninitialized: true,
+};
+
+const server = elmExpress({ app, secret, port, sessionConfig });
 
 app.ports.requestReverse.subscribe((data) => {
   app.ports.gotReverse.send({

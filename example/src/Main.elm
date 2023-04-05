@@ -34,6 +34,9 @@ type Model
     | Cookies
     | SetCookie String String
     | UnsetCookie String
+    | Session String
+    | SetSession String String
+    | UnsetSession String
 
 
 type Msg
@@ -49,6 +52,9 @@ route =
         , Parser.map Cookies (Parser.s "cookies")
         , Parser.map SetCookie (Parser.s "cookies" </> Parser.s "set" </> Parser.string </> Parser.string)
         , Parser.map UnsetCookie (Parser.s "cookies" </> Parser.s "unset" </> Parser.string)
+        , Parser.map Session (Parser.s "session" </> Parser.string)
+        , Parser.map SetSession (Parser.s "session" </> Parser.s "set" </> Parser.string </> Parser.string)
+        , Parser.map UnsetSession (Parser.s "session" </> Parser.s "unset" </> Parser.string)
         ]
 
 
@@ -121,6 +127,27 @@ init request response =
                                             |> Maybe.map (\cookie -> response |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
                                             |> Maybe.withDefault (response |> Response.text "No cookie found")
                                     )
+                    in
+                    ( res, respond res )
+
+                ( Request.GET, Session key ) ->
+                    let
+                        res =
+                            response |> Response.map (Response.text (request |> Request.session key |> Maybe.withDefault "Session key not found."))
+                    in
+                    ( res, respond res )
+
+                ( Request.GET, SetSession key value ) ->
+                    let
+                        res =
+                            response |> Response.map (Response.setSession key value >> Response.text ("Session - " ++ key ++ ": " ++ value))
+                    in
+                    ( res, respond res )
+
+                ( Request.GET, UnsetSession key ) ->
+                    let
+                        res =
+                            response |> Response.map (Response.unsetSession key >> Response.text ("Session - " ++ key))
                     in
                     ( res, respond res )
 

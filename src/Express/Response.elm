@@ -10,9 +10,11 @@ module Express.Response exposing
     , send
     , setCookie
     , setHeader
+    , setSession
     , status
     , text
     , unsetCookie
+    , unsetSession
     )
 
 import Dict
@@ -39,9 +41,11 @@ type Body
 type alias InternalResponse =
     { status : Status
     , body : Body
+    , headers : Dict.Dict String String
     , cookieSet : List Cookie.Cookie
     , cookieUnset : List Cookie.Cookie
-    , headers : Dict.Dict String String
+    , sessionSet : Dict.Dict String String
+    , sessionUnset : List String
     }
 
 
@@ -65,7 +69,15 @@ bodyToMIMEType body =
 
 new : Response
 new =
-    Unlocked { status = OK, body = Text "", cookieSet = [], cookieUnset = [], headers = Dict.empty }
+    Unlocked
+        { status = OK
+        , body = Text ""
+        , cookieSet = []
+        , cookieUnset = []
+        , sessionSet = Dict.empty
+        , sessionUnset = []
+        , headers = Dict.empty
+        }
 
 
 extractInternalResponse : Response -> InternalResponse
@@ -148,6 +160,16 @@ unsetCookie cookie response =
     response |> internalMap (\res -> { res | cookieUnset = cookie :: res.cookieUnset })
 
 
+setSession : String -> String -> Response -> Response
+setSession key value response =
+    response |> internalMap (\res -> { res | sessionSet = Dict.insert key value res.sessionSet })
+
+
+unsetSession : String -> Response -> Response
+unsetSession key response =
+    response |> internalMap (\res -> { res | sessionUnset = key :: res.sessionUnset })
+
+
 statusToCode : Status -> Int
 statusToCode status_ =
     case status_ of
@@ -187,7 +209,9 @@ encode response =
     E.object
         [ ( "status", res.status |> statusToCode |> E.int )
         , ( "body", res.body |> encodeBody )
+        , ( "headers", res.headers |> E.dict identity E.string )
         , ( "cookieSet", res.cookieSet |> E.list Cookie.encode )
         , ( "cookieUnset", res.cookieUnset |> E.list Cookie.encode )
-        , ( "headers", res.headers |> E.dict identity E.string)
+        , ( "sessionSet", res.sessionSet |> E.dict identity E.string )
+        , ( "sessionUnset", res.sessionUnset |> E.list E.string )
         ]

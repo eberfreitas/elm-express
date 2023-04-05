@@ -9,6 +9,7 @@ module Express.Request exposing
     , id
     , method
     , now
+    , session
     , stringToMethod
     , url
     )
@@ -34,9 +35,10 @@ type Request
         , now : Time.Posix
         , method : Method
         , url : Url.Url
-        , headers : Dict.Dict String String
         , body : String
+        , headers : Dict.Dict String String
         , cookies : Dict.Dict String String
+        , session : Dict.Dict String String
         }
 
 
@@ -76,8 +78,8 @@ stringToMethod method_ =
 
 decode : D.Decoder Request
 decode =
-    D.map7
-        (\id_ now_ method_ url_ headers_ body_ cookies_ ->
+    D.map8
+        (\id_ now_ method_ url_ headers_ body_ cookies_ session_ ->
             Request
                 { id = id_
                 , now = now_
@@ -86,6 +88,7 @@ decode =
                 , headers = headers_
                 , body = body_
                 , cookies = cookies_
+                , session = session_
                 }
         )
         (D.field "id" D.string)
@@ -101,6 +104,7 @@ decode =
         (D.field "headers" (D.keyValuePairs D.string) |> D.map Dict.fromList)
         (D.field "body" D.string)
         (D.field "cookies" (D.keyValuePairs D.string) |> D.map Dict.fromList)
+        (D.field "session" (D.keyValuePairs D.string) |> D.map Dict.fromList)
 
 
 id : Request -> String
@@ -141,3 +145,8 @@ cookies (Request req) =
 cookie : String -> Request -> Maybe String
 cookie key (Request req) =
     Dict.get key req.cookies
+
+
+session : String -> Request -> Maybe String
+session key (Request req) =
+    Dict.get key req.session
