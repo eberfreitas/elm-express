@@ -202,13 +202,19 @@ update msg { pool } =
                     )
 
 
+dummyHeaderMiddleware : () -> Request.Request -> Response.Response -> Response.Response
+dummyHeaderMiddleware _ _ response =
+    response |> Response.setHeader "X-Dummy" "Never argue with the data."
+
+
 main : Program () (Express.Model Model ()) (Express.Msg Msg)
 main =
     Express.application
-        { init = (\_ -> ())
+        { init = \_ -> ()
         , requestPort = requestPort
         , poolPort = poolPort
         , incoming = incoming
         , subscriptions = subscriptions
         , update = update
+        , middlewares = [ dummyHeaderMiddleware ]
         }

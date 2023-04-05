@@ -2,6 +2,7 @@ module Express exposing (Model, Msg, application)
 
 import Dict
 import Express.Conn as Conn
+import Express.Middleware as Middleware
 import Express.Request as Request
 import Express.Response as Response
 import Json.Decode as D
@@ -22,12 +23,13 @@ type Msg msg
 
 
 update :
-    AppUpdate msg model ctx
+    List (Middleware.Middleware ctx)
+    -> AppUpdate msg model ctx
     -> AppIncoming ctx msg model
     -> Msg msg
     -> Model model ctx
     -> ( Model model ctx, Cmd (Msg msg) )
-update appUpdate appIncoming msg model =
+update middlewares appUpdate appIncoming msg model =
     case msg of
         GotRequest raw ->
             raw
@@ -35,8 +37,11 @@ update appUpdate appIncoming msg model =
                 |> Result.map
                     (\request ->
                         let
+                            response =
+                                middlewares |> Middleware.run model.context request Response.new
+
                             ( conn, appCmds ) =
-                                appIncoming model.context request (Response.new |> Response.setHeader "X-Powered-By" "elm-express")
+                                appIncoming model.context request (response |> Response.setHeader "X-Powered-By" "elm-express")
 
                             requestId =
                                 Request.id request
@@ -81,6 +86,7 @@ type alias AppIncoming ctx msg model =
 type alias AppInit flags ctx =
     flags -> ctx
 
+
 type alias AppUpdate msg model ctx =
     msg -> Model model ctx -> ( Maybe (Conn.Conn model), Cmd msg )
 
@@ -92,11 +98,12 @@ type alias ApplicationParams flags ctx msg model =
     , init : AppInit flags ctx
     , subscriptions : Sub.Sub msg
     , update : AppUpdate msg model ctx
+    , middlewares : List (Middleware.Middleware ctx)
     }
 
 
 application : ApplicationParams flags ctx msg model -> Program flags (Model model ctx) (Msg msg)
-application ({ requestPort, poolPort, init, incoming, subscriptions } as params) =
+application ({ requestPort, poolPort, init, incoming, subscriptions, middlewares } as params) =
     let
         subs : Model model ctx -> Sub (Msg msg)
         subs _ =
@@ -107,7 +114,7 @@ application ({ requestPort, poolPort, init, incoming, subscriptions } as params)
                 ]
     in
     Platform.worker
-        { init = (\flags -> (Model Dict.empty (init flags), Cmd.none))
-        , update = update params.update incoming
+        { init = \flags -> ( Model Dict.empty (init flags), Cmd.none )
+        , update = update middlewares params.update incoming
         , subscriptions = subs
         }
