@@ -34,7 +34,7 @@ update appUpdate appInit msg model =
                     (\request ->
                         let
                             ( conn, appCmds ) =
-                                appInit request Response.empty
+                                appInit request (Response.new |> Response.setHeader "X-Powered-By" "elm-express")
 
                             requestId =
                                 Request.id request

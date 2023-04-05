@@ -1,19 +1,21 @@
 module Express.Response exposing
     ( Response
     , Status(..)
-    , empty
     , encode
     , html
     , json
     , lock
     , map
+    , new
     , send
     , setCookie
+    , setHeader
     , status
     , text
     , unsetCookie
     )
 
+import Dict
 import Express.Cookie as Cookie
 import Json.Encode as E
 
@@ -39,6 +41,7 @@ type alias InternalResponse =
     , body : Body
     , cookieSet : List Cookie.Cookie
     , cookieUnset : List Cookie.Cookie
+    , headers : Dict.Dict String String
     }
 
 
@@ -60,9 +63,9 @@ bodyToMIMEType body =
             "text/html"
 
 
-empty : Response
-empty =
-    Unlocked { status = OK, body = Text "", cookieSet = [], cookieUnset = [] }
+new : Response
+new =
+    Unlocked { status = OK, body = Text "", cookieSet = [], cookieUnset = [], headers = Dict.empty }
 
 
 extractInternalResponse : Response -> InternalResponse
@@ -130,6 +133,11 @@ html html_ response =
     response |> internalMap (\res -> { res | body = Html html_ })
 
 
+setHeader : String -> String -> Response -> Response
+setHeader name value response =
+    response |> internalMap (\res -> { res | headers = Dict.insert name value res.headers })
+
+
 setCookie : Cookie.Cookie -> Response -> Response
 setCookie cookie response =
     response |> internalMap (\res -> { res | cookieSet = cookie :: res.cookieSet })
@@ -181,4 +189,5 @@ encode response =
         , ( "body", res.body |> encodeBody )
         , ( "cookieSet", res.cookieSet |> E.list Cookie.encode )
         , ( "cookieUnset", res.cookieUnset |> E.list Cookie.encode )
+        , ( "headers", res.headers |> E.dict identity E.string)
         ]

@@ -114,12 +114,12 @@ init request response =
                         res =
                             response
                                 |> Response.map
-                                    (\res_ ->
+                                    (\_ ->
                                         request
                                             |> Request.cookie name
                                             |> Maybe.map (\value -> Cookie.new request name value Nothing)
-                                            |> Maybe.map (\cookie -> res_ |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
-                                            |> Maybe.withDefault (res_ |> Response.text "No cookie found")
+                                            |> Maybe.map (\cookie -> response |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
+                                            |> Maybe.withDefault (response |> Response.text "No cookie found")
                                     )
                     in
                     ( res, respond res )

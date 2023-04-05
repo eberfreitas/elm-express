@@ -6,10 +6,6 @@ const POOL = {};
 const REQUIRED_PORTS = ["requestPort", "responsePort", "poolPort"];
 
 module.exports = function elmExpress({ app, secret, port = 3000, mountingRoute = "/" }) {
-  const server = express();
-
-  server.use(cookieParser(secret));
-
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
       // TODO: docs here?
@@ -17,10 +13,18 @@ module.exports = function elmExpress({ app, secret, port = 3000, mountingRoute =
     }
   });
 
+  const server = express();
+
+  server.use(cookieParser(secret));
+
   app.ports.responsePort.subscribe(({ id, response }) => {
     const res = POOL[id] || null;
 
     if (!res) return;
+
+    if (Object.keys(response.headers).length > 0) {
+      res.set(response.headers);
+    }
 
     if (response.cookieSet.length > 0) {
       for (let i = 0; i < response.cookieSet.length; i++) {
