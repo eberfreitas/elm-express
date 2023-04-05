@@ -11,7 +11,11 @@ const sessionConfig = {
   saveUninitialized: true,
 };
 
-const server = elmExpress({ app, secret, port, sessionConfig });
+const reqCallback = (req) => {
+  console.log(`[${req.method}] ${new Date().toString()} - ${req.originalUrl}`);
+}
+
+const server = elmExpress({ app, secret, port, sessionConfig, reqCallback });
 
 app.ports.requestReverse.subscribe((data) => {
   app.ports.gotReverse.send({

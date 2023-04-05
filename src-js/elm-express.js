@@ -14,7 +14,7 @@ function buildSessionData(data) {
     }, {});
 }
 
-module.exports = function elmExpress({ app, secret, sessionConfig, port = 3000, mountingRoute = "/" }) {
+module.exports = function elmExpress({ app, secret, sessionConfig, reqCallback, port = 3000, mountingRoute = "/" }) {
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
       // TODO: docs here?
@@ -95,6 +95,10 @@ module.exports = function elmExpress({ app, secret, sessionConfig, port = 3000, 
         };
 
         POOL[id] = [req, res];
+
+        if (reqCallback) {
+          reqCallback(req, res);
+        }
 
         app.ports.requestPort.send(request);
       });
