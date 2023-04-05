@@ -63,8 +63,8 @@ encodeToPortReverse id text =
     E.object [ ( "requestId", E.string id ), ( "text", E.string text ) ]
 
 
-init : Request.Request -> Response.Response -> ( Conn.Conn Model, Cmd Msg )
-init request response =
+incoming : () -> Request.Request -> Response.Response -> ( Conn.Conn Model, Cmd Msg )
+incoming _ request response =
     let
         requestId =
             Request.id request
@@ -182,8 +182,8 @@ portHelper pool decoder fn raw =
         |> Maybe.withDefault ( Nothing, Cmd.none )
 
 
-update : Msg -> Conn.Pool Model -> ( Maybe (Conn.Conn Model), Cmd Msg )
-update msg pool =
+update : Msg -> Express.Model Model () -> ( Maybe (Conn.Conn Model), Cmd Msg )
+update msg { pool } =
     case msg of
         GotReverse raw ->
             raw
@@ -202,12 +202,13 @@ update msg pool =
                     )
 
 
-main : Program () (Express.Model Model) (Express.Msg Msg)
+main : Program () (Express.Model Model ()) (Express.Msg Msg)
 main =
     Express.application
-        { requestPort = requestPort
+        { init = (\_ -> ())
+        , requestPort = requestPort
         , poolPort = poolPort
-        , init = init
+        , incoming = incoming
         , subscriptions = subscriptions
         , update = update
         }

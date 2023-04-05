@@ -8,8 +8,10 @@ import Json.Decode as D
 import Platform.Sub as Sub
 
 
-type alias Model model =
-    Conn.Pool model
+type alias Model model ctx =
+    { pool : Conn.Pool model
+    , context : ctx
+    }
 
 
 type Msg msg
@@ -20,12 +22,12 @@ type Msg msg
 
 
 update :
-    AppUpdate msg model
-    -> AppInit msg model
+    AppUpdate msg model ctx
+    -> AppIncoming ctx msg model
     -> Msg msg
-    -> Model model
-    -> ( Model model, Cmd (Msg msg) )
-update appUpdate appInit msg model =
+    -> Model model ctx
+    -> ( Model model ctx, Cmd (Msg msg) )
+update appUpdate appIncoming msg model =
     case msg of
         GotRequest raw ->
             raw
@@ -34,20 +36,20 @@ update appUpdate appInit msg model =
                     (\request ->
                         let
                             ( conn, appCmds ) =
-                                appInit request (Response.new |> Response.setHeader "X-Powered-By" "elm-express")
+                                appIncoming model.context request (Response.new |> Response.setHeader "X-Powered-By" "elm-express")
 
                             requestId =
                                 Request.id request
 
                             nextModel =
-                                model |> Dict.insert (Request.id request) conn
+                                { model | pool = model.pool |> Dict.insert (Request.id request) conn }
                         in
                         ( nextModel, Cmd.map (AppMsg requestId) appCmds )
                     )
                 |> Result.withDefault ( model, Cmd.none )
 
         GotPoolDrop uuid ->
-            ( model |> Dict.remove uuid, Cmd.none )
+            ( { model | pool = model.pool |> Dict.remove uuid }, Cmd.none )
 
         AppMsg _ _ ->
             ( model, Cmd.none )
@@ -65,34 +67,38 @@ update appUpdate appInit msg model =
                                 Request.id conn.request
 
                             nextModel =
-                                Dict.insert requestId conn model
+                                { model | pool = model.pool |> Dict.insert requestId conn }
                         in
                         ( nextModel, appCmds |> Cmd.map (AppMsg requestId) )
                     )
                 |> Maybe.withDefault ( model, Cmd.none )
 
 
-type alias AppInit msg model =
-    Request.Request -> Response.Response -> ( Conn.Conn model, Cmd msg )
+type alias AppIncoming ctx msg model =
+    ctx -> Request.Request -> Response.Response -> ( Conn.Conn model, Cmd msg )
 
 
-type alias AppUpdate msg model =
-    msg -> Model model -> ( Maybe (Conn.Conn model), Cmd msg )
+type alias AppInit flags ctx =
+    flags -> ctx
+
+type alias AppUpdate msg model ctx =
+    msg -> Model model ctx -> ( Maybe (Conn.Conn model), Cmd msg )
 
 
-type alias ApplicationParams msg model =
+type alias ApplicationParams flags ctx msg model =
     { requestPort : (D.Value -> Msg msg) -> Sub.Sub (Msg msg)
     , poolPort : (String -> Msg msg) -> Sub.Sub (Msg msg)
-    , init : AppInit msg model
+    , incoming : AppIncoming ctx msg model
+    , init : AppInit flags ctx
     , subscriptions : Sub.Sub msg
-    , update : AppUpdate msg model
+    , update : AppUpdate msg model ctx
     }
 
 
-application : ApplicationParams msg a -> Program () (Model a) (Msg msg)
-application ({ requestPort, poolPort, init, subscriptions } as params) =
+application : ApplicationParams flags ctx msg model -> Program flags (Model model ctx) (Msg msg)
+application ({ requestPort, poolPort, init, incoming, subscriptions } as params) =
     let
-        subs : Model a -> Sub (Msg msg)
+        subs : Model model ctx -> Sub (Msg msg)
         subs _ =
             Sub.batch
                 [ requestPort GotRequest
@@ -101,7 +107,7 @@ application ({ requestPort, poolPort, init, subscriptions } as params) =
                 ]
     in
     Platform.worker
-        { init = \_ -> ( Dict.empty, Cmd.none )
-        , update = update params.update init
+        { init = (\flags -> (Model Dict.empty (init flags), Cmd.none))
+        , update = update params.update incoming
         , subscriptions = subs
         }
