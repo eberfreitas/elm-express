@@ -1,35 +1,14 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const { v4: uuidv4 } = require('uuid');
 
 const POOL = {};
 const REQUIRED_PORTS = ["requestPort", "responsePort", "poolPort"];
 
-function buildCookieOptions(cookieDef) {
-  let expiresBase = {};
-
-  switch (cookieDef.expires.type) {
-    case "at":
-      expiresBase = { expires: new Date(cookieDef.expires.posix) };
-      break;
-
-    case "session":
-    default:
-      expiresBase = {};
-  }
-
-  return {
-    ...expiresBase,
-    domain: cookieDef.domain,
-    httpOnly: cookieDef.httpOnly,
-    path: cookieDef.path,
-    secure: cookieDef.secure,
-    signed: cookieDef.signed,
-    sameSite: cookieDef.sameSite,
-  };
-}
-
-module.exports = function elmExpress({ app, port = 3000, mountingRoute = "/" }) {
+module.exports = function elmExpress({ app, secret, port = 3000, mountingRoute = "/" }) {
   const server = express();
+
+  server.use(cookieParser(secret));
 
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
@@ -47,7 +26,7 @@ module.exports = function elmExpress({ app, port = 3000, mountingRoute = "/" }) 
       for (let i = 0; i < response.cookieSet.length; i++) {
         const cookieDef = response.cookieSet[i];
 
-        res?.cookie(cookieDef.name, cookieDef.value, buildCookieOptions(cookieDef));
+        res?.cookie(cookieDef.name, cookieDef.value, cookieDef);
       }
     }
 
@@ -55,7 +34,7 @@ module.exports = function elmExpress({ app, port = 3000, mountingRoute = "/" }) 
       for (let i = 0; i < response.cookieUnset.length; i++) {
         const cookieDef = response.cookieUnset[i];
 
-        res?.clearCookie(cookieDef.name, buildCookieOptions(cookieDef));
+        res?.clearCookie(cookieDef.name, cookieDef);
       }
     }
 

@@ -1,10 +1,9 @@
 module Express.Cookie exposing
     ( Cookie
-    , Expires(..)
     , SameSite(..)
     , domain
     , encode
-    , expires
+    , maxAge
     , httpOnly
     , new
     , path
@@ -16,12 +15,6 @@ module Express.Cookie exposing
 import Express.Request as Request
 import Html.Attributes exposing (name, value)
 import Json.Encode as E
-import Time
-
-
-type Expires
-    = At Time.Posix
-    | Session
 
 
 type SameSite
@@ -35,23 +28,13 @@ type Cookie
         { name : String
         , value : String
         , domain : String
-        , expires : Expires
+        , maxAge : Maybe Int
         , httpOnly : Bool
         , path : String
         , secure : Bool
         , signed : Bool
         , sameSite : SameSite
         }
-
-
-encodeExpires : Expires -> E.Value
-encodeExpires expires_ =
-    case expires_ of
-        At posix ->
-            E.object [ ( "type", E.string "at" ), ( "posix", E.int <| Time.posixToMillis posix ) ]
-
-        Session ->
-            E.object [ ( "type", E.string "session" ) ]
 
 
 encodeSameSite : SameSite -> E.Value
@@ -73,7 +56,7 @@ encode (Cookie cookie) =
         [ ( "name", E.string cookie.name )
         , ( "value", E.string cookie.value )
         , ( "domain", E.string cookie.domain )
-        , ( "expires", encodeExpires cookie.expires )
+        , ( "maxAge", cookie.maxAge |> Maybe.map E.int |> Maybe.withDefault E.null )
         , ( "httpOnly", E.bool cookie.httpOnly )
         , ( "path", E.string cookie.path )
         , ( "secure", E.bool cookie.secure )
@@ -82,13 +65,13 @@ encode (Cookie cookie) =
         ]
 
 
-new : Request.Request -> String -> String -> Expires -> Cookie
-new request name value expires_ =
+new : Request.Request -> String -> String -> Maybe Int -> Cookie
+new request name value maxAge_ =
     Cookie
         { name = name
         , value = value
         , domain = request |> Request.url |> .host
-        , expires = expires_
+        , maxAge = maxAge_
         , httpOnly = False
         , path = "/"
         , secure = False
@@ -102,9 +85,9 @@ domain domain_ (Cookie cookie) =
     { cookie | domain = domain_ } |> Cookie
 
 
-expires : Expires -> Cookie -> Cookie
-expires expires_ (Cookie cookie) =
-    { cookie | expires = expires_ } |> Cookie
+maxAge : Maybe Int -> Cookie -> Cookie
+maxAge maxAge_ (Cookie cookie) =
+    { cookie | maxAge = maxAge_ } |> Cookie
 
 
 httpOnly : Bool -> Cookie -> Cookie

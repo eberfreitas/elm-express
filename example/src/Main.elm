@@ -105,7 +105,7 @@ init request response =
                 ( GET, SetCookie name value ) ->
                     let
                         cookie =
-                            Cookie.new request name value Cookie.Session
+                            Cookie.new request name value Nothing
 
                         res =
                             response |> Response.setCookie cookie |> Response.text ("Cookie - " ++ name ++ ": " ++ value)
@@ -117,8 +117,8 @@ init request response =
                         res =
                             request
                                 |> Request.cookie name
-                                |> Maybe.map (\value -> Cookie.new request name value (Cookie.Session))
-                                |> Maybe.map (\cookie ->  response |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
+                                |> Maybe.map (\value -> Cookie.new request name value Nothing)
+                                |> Maybe.map (\cookie -> response |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
                                 |> Maybe.withDefault (response |> Response.text "No cookie found")
                     in
                     ( res, respond res )
@@ -169,4 +169,3 @@ main =
         , subscriptions = subscriptions
         , update = update
         }
-
