@@ -6,6 +6,7 @@ import Express.Middleware as Middleware
 import Express.Request as Request
 import Express.Response as Response
 import Json.Decode as D
+import Json.Encode as E
 import Platform.Sub as Sub
 
 
@@ -93,6 +94,7 @@ type alias AppUpdate msg model ctx =
 
 type alias ApplicationParams flags ctx msg model =
     { requestPort : (D.Value -> Msg msg) -> Sub.Sub (Msg msg)
+    , responsePort : E.Value -> Cmd.Cmd (Msg msg)
     , poolPort : (String -> Msg msg) -> Sub.Sub (Msg msg)
     , incoming : AppIncoming ctx msg model
     , init : AppInit flags ctx
@@ -103,18 +105,18 @@ type alias ApplicationParams flags ctx msg model =
 
 
 application : ApplicationParams flags ctx msg model -> Program flags (Model model ctx) (Msg msg)
-application ({ requestPort, poolPort, init, incoming, subscriptions, middlewares } as params) =
+application params =
     let
         subs : Model model ctx -> Sub (Msg msg)
         subs _ =
             Sub.batch
-                [ requestPort GotRequest
-                , poolPort GotPoolDrop
-                , Sub.map FromPort subscriptions
+                [ params.requestPort GotRequest
+                , params.poolPort GotPoolDrop
+                , Sub.map FromPort params.subscriptions
                 ]
     in
     Platform.worker
-        { init = \flags -> ( Model Dict.empty (init flags), Cmd.none )
-        , update = update middlewares params.update incoming
+        { init = \flags -> ( Model Dict.empty (params.init flags), Cmd.none )
+        , update = update params.middlewares params.update params.incoming
         , subscriptions = subs
         }

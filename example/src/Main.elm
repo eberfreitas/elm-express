@@ -212,6 +212,7 @@ main =
     Express.application
         { init = \_ -> ()
         , requestPort = requestPort
+        , responsePort = responsePort
         , poolPort = poolPort
         , incoming = incoming
         , subscriptions = subscriptions
