@@ -15,7 +15,7 @@ type alias Model model =
 type Msg msg
     = GotRequest D.Value
     | GotPoolDrop String
-    | AppMsg Request.Id msg
+    | AppMsg String msg
     | FromPort msg
 
 

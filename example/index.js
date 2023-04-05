@@ -8,8 +8,10 @@ const secret = "p4ssw0rd";
 const server = elmExpress({ app, secret, port });
 
 app.ports.requestReverse.subscribe((data) => {
-  const reversed = data.text.split("").reverse().join("");
-  app.ports.gotReverse.send({ id: data.requestId, reversed });
+  app.ports.gotReverse.send({
+    id: data.requestId,
+    reversed: data.text.split("").reverse().join(""),
+  });
 });
 
 server.start(() => {

@@ -4,7 +4,6 @@ import Dict
 import Express
 import Express.Conn as Conn
 import Express.Cookie as Cookie
-import Express.Http as Http
 import Express.Request as Request
 import Express.Response as Response
 import Json.Decode as D
@@ -53,7 +52,7 @@ route =
         ]
 
 
-encodeToPortReverse : Request.Id -> String -> E.Value
+encodeToPortReverse : String -> String -> E.Value
 encodeToPortReverse id text =
     E.object [ ( "requestId", E.string id ), ( "text", E.string text ) ]
 
@@ -75,24 +74,24 @@ init request response =
 
         ( nextResponse, cmd ) =
             case ( requestMethod, model ) of
-                ( Http.GET, HelloWorld ) ->
+                ( Request.GET, HelloWorld ) ->
                     let
                         res =
                             response |> Response.text "Hello world!"
                     in
                     ( res, respond res )
 
-                ( Http.GET, Reverse text ) ->
+                ( Request.GET, Reverse text ) ->
                     let
                         res =
                             response |> Response.text (String.reverse text)
                     in
                     ( res, respond res )
 
-                ( Http.GET, PortReverse text ) ->
+                ( Request.GET, PortReverse text ) ->
                     ( response, requestReverse <| encodeToPortReverse requestId text )
 
-                ( Http.GET, Cookies ) ->
+                ( Request.GET, Cookies ) ->
                     let
                         cookiesValue =
                             request
@@ -104,7 +103,7 @@ init request response =
                     in
                     ( res, respond res )
 
-                ( Http.GET, SetCookie name value ) ->
+                ( Request.GET, SetCookie name value ) ->
                     let
                         cookie =
                             Cookie.new request name value Nothing
@@ -114,7 +113,7 @@ init request response =
                     in
                     ( res, respond res )
 
-                ( Http.GET, UnsetCookie name ) ->
+                ( Request.GET, UnsetCookie name ) ->
                     let
                         res =
                             request
@@ -128,7 +127,7 @@ init request response =
                 _ ->
                     let
                         res =
-                            response |> Response.status Http.NotFound |> Response.text "Not found"
+                            response |> Response.status Response.NotFound |> Response.text "Not found"
                     in
                     ( res, respond res )
     in

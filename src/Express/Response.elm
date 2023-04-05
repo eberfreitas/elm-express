@@ -1,5 +1,6 @@
 module Express.Response exposing
     ( Response
+    , Status(..)
     , empty
     , encode
     , html
@@ -13,14 +14,28 @@ module Express.Response exposing
     )
 
 import Express.Cookie as Cookie
-import Express.Http as Http
-import Express.Request as Request
 import Json.Encode as E
 
 
+
+-- Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+
+
+type Status
+    = OK
+    | NotFound
+    | InternalServerError
+
+
+type Body
+    = Json E.Value
+    | Text String
+    | Html String
+
+
 type alias InternalResponse =
-    { status : Http.Status
-    , body : Http.Body
+    { status : Status
+    , body : Body
     , cookieSet : List Cookie.Cookie
     , cookieUnset : List Cookie.Cookie
     }
@@ -31,9 +46,22 @@ type Response
     | Locked InternalResponse
 
 
+bodyToMIMEType : Body -> String
+bodyToMIMEType body =
+    case body of
+        Json _ ->
+            "application/json"
+
+        Text _ ->
+            "text/plain"
+
+        Html _ ->
+            "text/html"
+
+
 empty : Response
 empty =
-    Unlocked { status = Http.OK, body = Http.Text "", cookieSet = [], cookieUnset = [] }
+    Unlocked { status = OK, body = Text "", cookieSet = [], cookieUnset = [] }
 
 
 extractInternalResponse : Response -> InternalResponse
@@ -66,29 +94,29 @@ lock response =
             response
 
 
-send : Request.Id -> Response -> E.Value
+send : String -> Response -> E.Value
 send id response =
     E.object [ ( "id", E.string id ), ( "response", encode response ) ]
 
 
-status : Http.Status -> Response -> Response
+status : Status -> Response -> Response
 status status_ response =
     response |> map (\res -> { res | status = status_ })
 
 
 text : String -> Response -> Response
 text text_ response =
-    response |> map (\res -> { res | body = Http.Text text_ })
+    response |> map (\res -> { res | body = Text text_ })
 
 
 json : E.Value -> Response -> Response
 json val response =
-    response |> map (\res -> { res | body = Http.Json val })
+    response |> map (\res -> { res | body = Json val })
 
 
 html : String -> Response -> Response
 html html_ response =
-    response |> map (\res -> { res | body = Http.Html html_ })
+    response |> map (\res -> { res | body = Html html_ })
 
 
 setCookie : Cookie.Cookie -> Response -> Response
@@ -101,6 +129,36 @@ unsetCookie cookie response =
     response |> map (\res -> { res | cookieUnset = cookie :: res.cookieUnset })
 
 
+statusToCode : Status -> Int
+statusToCode status_ =
+    case status_ of
+        OK ->
+            200
+
+        NotFound ->
+            404
+
+        InternalServerError ->
+            500
+
+
+encodeBody : Body -> E.Value
+encodeBody body =
+    let
+        mime =
+            body |> bodyToMIMEType |> E.string
+    in
+    case body of
+        Json val ->
+            E.object [ ( "mime", mime ), ( "body", val ) ]
+
+        Text text_ ->
+            E.object [ ( "mime", mime ), ( "body", E.string text_ ) ]
+
+        Html html_ ->
+            E.object [ ( "mime", mime ), ( "body", E.string html_ ) ]
+
+
 encode : Response -> E.Value
 encode response =
     let
@@ -108,8 +166,8 @@ encode response =
             extractInternalResponse response
     in
     E.object
-        [ ( "status", internal.status |> Http.statusToCode |> E.int )
-        , ( "body", internal.body |> Http.encodeBody )
+        [ ( "status", internal.status |> statusToCode |> E.int )
+        , ( "body", internal.body |> encodeBody )
         , ( "cookieSet", internal.cookieSet |> E.list Cookie.encode )
         , ( "cookieUnset", internal.cookieUnset |> E.list Cookie.encode )
         ]
