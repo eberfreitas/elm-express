@@ -6,6 +6,7 @@ module Express.Response exposing
     , html
     , json
     , lock
+    , map
     , send
     , setCookie
     , status
@@ -74,8 +75,18 @@ extractInternalResponse response =
             res
 
 
-map : (InternalResponse -> InternalResponse) -> Response -> Response
-map fn response =
+map : (Response -> Response) -> Response -> Response
+map mapFn response =
+    case response of
+        Unlocked _ ->
+            mapFn response
+
+        Locked _ ->
+            response
+
+
+internalMap : (InternalResponse -> InternalResponse) -> Response -> Response
+internalMap fn response =
     case response of
         Unlocked res ->
             Unlocked <| fn res
@@ -101,32 +112,32 @@ send id response =
 
 status : Status -> Response -> Response
 status status_ response =
-    response |> map (\res -> { res | status = status_ })
+    response |> internalMap (\res -> { res | status = status_ })
 
 
 text : String -> Response -> Response
 text text_ response =
-    response |> map (\res -> { res | body = Text text_ })
+    response |> internalMap (\res -> { res | body = Text text_ })
 
 
 json : E.Value -> Response -> Response
 json val response =
-    response |> map (\res -> { res | body = Json val })
+    response |> internalMap (\res -> { res | body = Json val })
 
 
 html : String -> Response -> Response
 html html_ response =
-    response |> map (\res -> { res | body = Html html_ })
+    response |> internalMap (\res -> { res | body = Html html_ })
 
 
 setCookie : Cookie.Cookie -> Response -> Response
 setCookie cookie response =
-    response |> map (\res -> { res | cookieSet = cookie :: res.cookieSet })
+    response |> internalMap (\res -> { res | cookieSet = cookie :: res.cookieSet })
 
 
 unsetCookie : Cookie.Cookie -> Response -> Response
 unsetCookie cookie response =
-    response |> map (\res -> { res | cookieUnset = cookie :: res.cookieUnset })
+    response |> internalMap (\res -> { res | cookieUnset = cookie :: res.cookieUnset })
 
 
 statusToCode : Status -> Int
@@ -162,12 +173,12 @@ encodeBody body =
 encode : Response -> E.Value
 encode response =
     let
-        internal =
+        res =
             extractInternalResponse response
     in
     E.object
-        [ ( "status", internal.status |> statusToCode |> E.int )
-        , ( "body", internal.body |> encodeBody )
-        , ( "cookieSet", internal.cookieSet |> E.list Cookie.encode )
-        , ( "cookieUnset", internal.cookieUnset |> E.list Cookie.encode )
+        [ ( "status", res.status |> statusToCode |> E.int )
+        , ( "body", res.body |> encodeBody )
+        , ( "cookieSet", res.cookieSet |> E.list Cookie.encode )
+        , ( "cookieUnset", res.cookieUnset |> E.list Cookie.encode )
         ]

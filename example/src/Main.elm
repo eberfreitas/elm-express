@@ -77,14 +77,14 @@ init request response =
                 ( Request.GET, HelloWorld ) ->
                     let
                         res =
-                            response |> Response.text "Hello world!"
+                            response |> Response.map (Response.text "Hello world!")
                     in
                     ( res, respond res )
 
                 ( Request.GET, Reverse text ) ->
                     let
                         res =
-                            response |> Response.text (String.reverse text)
+                            response |> Response.map (Response.text (String.reverse text))
                     in
                     ( res, respond res )
 
@@ -93,41 +93,41 @@ init request response =
 
                 ( Request.GET, Cookies ) ->
                     let
-                        cookiesValue =
-                            request
-                                |> Request.cookies
-                                |> E.dict identity E.string
-
                         res =
-                            response |> Response.json cookiesValue
+                            response |> Response.map (Response.json (request |> Request.cookies |> E.dict identity E.string))
                     in
                     ( res, respond res )
 
                 ( Request.GET, SetCookie name value ) ->
                     let
-                        cookie =
-                            Cookie.new request name value Nothing
-
                         res =
-                            response |> Response.setCookie cookie |> Response.text ("Cookie - " ++ name ++ ": " ++ value)
+                            response
+                                |> Response.map
+                                    (Response.setCookie (Cookie.new request name value Nothing)
+                                        >> Response.text ("Cookie - " ++ name ++ ": " ++ value)
+                                    )
                     in
                     ( res, respond res )
 
                 ( Request.GET, UnsetCookie name ) ->
                     let
                         res =
-                            request
-                                |> Request.cookie name
-                                |> Maybe.map (\value -> Cookie.new request name value Nothing)
-                                |> Maybe.map (\cookie -> response |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
-                                |> Maybe.withDefault (response |> Response.text "No cookie found")
+                            response
+                                |> Response.map
+                                    (\res_ ->
+                                        request
+                                            |> Request.cookie name
+                                            |> Maybe.map (\value -> Cookie.new request name value Nothing)
+                                            |> Maybe.map (\cookie -> res_ |> Response.unsetCookie cookie |> Response.text ("Cookie - " ++ name))
+                                            |> Maybe.withDefault (res_ |> Response.text "No cookie found")
+                                    )
                     in
                     ( res, respond res )
 
                 _ ->
                     let
                         res =
-                            response |> Response.status Response.NotFound |> Response.text "Not found"
+                            response |> Response.map (Response.status Response.NotFound >> Response.text "Not found")
                     in
                     ( res, respond res )
     in
