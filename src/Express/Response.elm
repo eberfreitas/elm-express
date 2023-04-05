@@ -182,12 +182,12 @@ unsetSession key response =
 
 redirect : String -> Response -> Response
 redirect path response =
-    response |> internalMap (\res -> { res | redirect = Just (Found path) })
+    response |> internalMap (\res -> { res | redirect = Just (Found path) }) |> lock
 
 
 rawRedirect : Redirect -> Response -> Response
 rawRedirect redirect_ response =
-    response |> internalMap (\res -> { res | redirect = Just redirect_ })
+    response |> internalMap (\res -> { res | redirect = Just redirect_ }) |> lock
 
 
 statusToCode : Status -> Int
