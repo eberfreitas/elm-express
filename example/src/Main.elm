@@ -165,14 +165,11 @@ update msg pool =
                     (D.field "reversed" D.string)
                     (\conn reversed ->
                         let
-                            nextResponse =
-                                conn.response |> Response.text reversed
-
                             nextConn =
-                                { conn | response = nextResponse }
+                                { conn | response = Response.text reversed conn.response }
                         in
                         ( nextConn
-                        , nextResponse
+                        , nextConn.response
                             |> Response.send (Request.id conn.request)
                             |> responsePort
                         )

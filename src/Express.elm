@@ -1,13 +1,11 @@
 module Express exposing (Model, Msg, application)
 
 import Dict
+import Express.Conn as Conn
 import Express.Request as Request
 import Express.Response as Response
 import Json.Decode as D
 import Platform.Sub as Sub
-import Express.Conn as Conn
-
-
 
 
 type alias Model model =
