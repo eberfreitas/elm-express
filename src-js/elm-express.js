@@ -62,7 +62,11 @@ module.exports = function elmExpress({ app, secret, sessionConfig, port = 3000, 
 
     app.ports.poolPort.send(id);
 
-    res.status(response.status).type(response.body.mime).send(response.body.body);
+    if (response.redirect) {
+      res.redirect(response.redirect.code, response.redirect.path);
+    } else {
+      res.status(response.status).type(response.body.mime).send(response.body.body);
+    }
   });
 
   const elmExtension = {

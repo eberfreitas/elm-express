@@ -37,6 +37,7 @@ type Model
     | Session String
     | SetSession String String
     | UnsetSession String
+    | Redirect
 
 
 type Msg
@@ -55,6 +56,7 @@ route =
         , Parser.map Session (Parser.s "session" </> Parser.string)
         , Parser.map SetSession (Parser.s "session" </> Parser.s "set" </> Parser.string </> Parser.string)
         , Parser.map UnsetSession (Parser.s "session" </> Parser.s "unset" </> Parser.string)
+        , Parser.map Redirect (Parser.s "redirect")
         ]
 
 
@@ -148,6 +150,13 @@ incoming _ request response =
                     let
                         res =
                             response |> Response.map (Response.unsetSession key >> Response.text ("Session - " ++ key))
+                    in
+                    ( res, respond res )
+
+                ( Request.GET, Redirect ) ->
+                    let
+                        res =
+                            response |> Response.map (Response.redirect "/")
                     in
                     ( res, respond res )
 

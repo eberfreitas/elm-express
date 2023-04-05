@@ -1,5 +1,6 @@
 module Express.Response exposing
-    ( Response
+    ( Redirect(..)
+    , Response
     , Status(..)
     , encode
     , html
@@ -7,6 +8,8 @@ module Express.Response exposing
     , lock
     , map
     , new
+    , rawRedirect
+    , redirect
     , send
     , setCookie
     , setHeader
@@ -32,6 +35,11 @@ type Status
     | InternalServerError
 
 
+type Redirect
+    = MovedPermanently String
+    | Found String
+
+
 type Body
     = Json E.Value
     | Text String
@@ -46,6 +54,7 @@ type alias InternalResponse =
     , cookieUnset : List Cookie.Cookie
     , sessionSet : Dict.Dict String String
     , sessionUnset : List String
+    , redirect : Maybe Redirect
     }
 
 
@@ -77,6 +86,7 @@ new =
         , sessionSet = Dict.empty
         , sessionUnset = []
         , headers = Dict.empty
+        , redirect = Nothing
         }
 
 
@@ -170,6 +180,16 @@ unsetSession key response =
     response |> internalMap (\res -> { res | sessionUnset = key :: res.sessionUnset })
 
 
+redirect : String -> Response -> Response
+redirect path response =
+    response |> internalMap (\res -> { res | redirect = Just (Found path) })
+
+
+rawRedirect : Redirect -> Response -> Response
+rawRedirect redirect_ response =
+    response |> internalMap (\res -> { res | redirect = Just redirect_ })
+
+
 statusToCode : Status -> Int
 statusToCode status_ =
     case status_ of
@@ -181,6 +201,26 @@ statusToCode status_ =
 
         InternalServerError ->
             500
+
+
+redirectToCodeAndPath : Redirect -> ( Int, String )
+redirectToCodeAndPath redirect_ =
+    case redirect_ of
+        MovedPermanently path ->
+            ( 301, path )
+
+        Found path ->
+            ( 302, path )
+
+
+encodeRedirect : Maybe Redirect -> E.Value
+encodeRedirect redirect_ =
+    redirect_
+        |> Maybe.map
+            (redirectToCodeAndPath
+                >> (\( code, path ) -> E.object [ ( "code", E.int code ), ( "path", E.string path ) ])
+            )
+        |> Maybe.withDefault E.null
 
 
 encodeBody : Body -> E.Value
@@ -214,4 +254,5 @@ encode response =
         , ( "cookieUnset", res.cookieUnset |> E.list Cookie.encode )
         , ( "sessionSet", res.sessionSet |> E.dict identity E.string )
         , ( "sessionUnset", res.sessionUnset |> E.list E.string )
+        , ( "redirect", res.redirect |> encodeRedirect )
         ]
