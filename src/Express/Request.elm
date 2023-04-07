@@ -4,6 +4,7 @@ module Express.Request exposing
     , cookie
     , cookies
     , decode
+    , decodeRequestId
     , header
     , headers
     , id
@@ -105,6 +106,11 @@ decode =
         (D.field "body" D.string)
         (D.field "cookies" (D.keyValuePairs D.string) |> D.map Dict.fromList)
         (D.field "session" (D.keyValuePairs D.string) |> D.map Dict.fromList)
+
+
+decodeRequestId : D.Value -> Maybe String
+decodeRequestId raw =
+    raw |> D.decodeValue (D.field "requestId" D.string) |> Result.toMaybe
 
 
 id : Request -> String

@@ -1,7 +1,10 @@
+const XMLHttpRequest = require('xhr2');
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const { v4: uuidv4 } = require('uuid');
+
+global.XMLHttpRequest = XMLHttpRequest;
 
 const POOL = {};
 const REQUIRED_PORTS = ["requestPort", "responsePort", "poolPort"];

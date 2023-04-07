@@ -19,7 +19,7 @@ const server = elmExpress({ app, secret, port, sessionConfig, reqCallback });
 
 app.ports.requestReverse.subscribe((data) => {
   app.ports.gotReverse.send({
-    id: data.requestId,
+    requestId: data.requestId,
     reversed: data.text.split("").reverse().join(""),
   });
 });

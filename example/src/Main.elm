@@ -6,8 +6,10 @@ import Express.Conn as Conn
 import Express.Cookie as Cookie
 import Express.Request as Request
 import Express.Response as Response
+import Http
 import Json.Decode as D
 import Json.Encode as E
+import Result
 import Url.Parser as Parser exposing ((</>))
 
 
@@ -38,10 +40,12 @@ type Model
     | SetSession String String
     | UnsetSession String
     | Redirect
+    | Task
 
 
 type Msg
     = GotReverse D.Value
+    | GotTask (Result.Result Http.Error String)
 
 
 route : Parser.Parser (Model -> a) a
@@ -57,6 +61,7 @@ route =
         , Parser.map SetSession (Parser.s "session" </> Parser.s "set" </> Parser.string </> Parser.string)
         , Parser.map UnsetSession (Parser.s "session" </> Parser.s "unset" </> Parser.string)
         , Parser.map Redirect (Parser.s "redirect")
+        , Parser.map Task (Parser.s "task")
         ]
 
 
@@ -160,6 +165,16 @@ incoming _ request response =
                     in
                     ( res, respond res )
 
+                ( Request.GET, Task ) ->
+                    let
+                        nextCmd =
+                            Http.get
+                                { url = "https://elm-lang.org/assets/public-opinion.txt"
+                                , expect = Http.expectString GotTask
+                                }
+                    in
+                    ( response, nextCmd )
+
                 _ ->
                     let
                         res =
@@ -175,45 +190,49 @@ subscriptions =
     gotReverse GotReverse
 
 
-portHelper :
-    Conn.Pool Model
-    -> D.Decoder a
-    -> (Conn.Conn Model -> a -> ( Conn.Conn Model, Cmd.Cmd Msg ))
-    -> E.Value
-    -> ( Maybe (Conn.Conn Model), Cmd.Cmd Msg )
-portHelper pool decoder fn raw =
-    raw
-        |> D.decodeValue (D.field "id" D.string)
-        |> Result.toMaybe
-        |> Maybe.andThen (\id -> Dict.get id pool)
-        |> Maybe.andThen (\conn -> raw |> D.decodeValue decoder |> Result.toMaybe |> Maybe.map (fn conn))
-        |> Maybe.map (\( conn, cmds ) -> ( Just conn, cmds ))
-        |> Maybe.withDefault ( Nothing, Cmd.none )
-
-
-update : Msg -> Express.Model Model () -> ( Maybe (Conn.Conn Model), Cmd Msg )
-update msg { pool } =
+update : () -> Msg -> Conn.Conn Model -> ( Conn.Conn Model, Cmd Msg )
+update _ msg conn =
     case msg of
         GotReverse raw ->
             raw
-                |> portHelper pool
-                    (D.field "reversed" D.string)
-                    (\conn reversed ->
+                |> D.decodeValue (D.field "reversed" D.string)
+                |> Result.toMaybe
+                |> Maybe.map
+                    (\reversed ->
                         let
                             nextConn =
-                                { conn | response = Response.text reversed conn.response }
+                                { conn | response = conn.response |> Response.map (Response.text reversed) }
                         in
-                        ( nextConn
-                        , nextConn.response
-                            |> Response.send (Request.id conn.request)
-                            |> responsePort
-                        )
+                        ( nextConn, nextConn.response |> Response.send (Request.id conn.request) |> responsePort )
                     )
+                |> Maybe.withDefault ( conn, Cmd.none )
+
+        GotTask result ->
+            result
+                |> Result.map
+                    (\txt ->
+                        let
+                            nextConn =
+                                { conn | response = conn.response |> Response.map (Response.text txt) }
+                        in
+                        ( nextConn, nextConn.response |> Response.send (Request.id conn.request) |> responsePort )
+                    )
+                |> Result.withDefault ( conn, Cmd.none )
 
 
 dummyHeaderMiddleware : () -> Request.Request -> Response.Response -> Response.Response
 dummyHeaderMiddleware _ _ response =
     response |> Response.setHeader "X-Dummy" "Never argue with the data."
+
+
+decodeRequestId : Msg -> Maybe String
+decodeRequestId msg =
+    case msg of
+        GotReverse raw ->
+            Request.decodeRequestId raw
+
+        _ ->
+            Nothing
 
 
 main : Program () (Express.Model Model ()) (Express.Msg Msg)
@@ -227,4 +246,5 @@ main =
         , subscriptions = subscriptions
         , update = update
         , middlewares = [ dummyHeaderMiddleware ]
+        , decodeRequestId = decodeRequestId
         }

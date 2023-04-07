@@ -25,12 +25,13 @@ type Msg msg
 
 update :
     List (Middleware.Middleware ctx)
+    -> AppDecodeRequestId msg
     -> AppUpdate msg model ctx
     -> AppIncoming ctx msg model
     -> Msg msg
     -> Model model ctx
     -> ( Model model ctx, Cmd (Msg msg) )
-update middlewares appUpdate appIncoming msg model =
+update middlewares decodeRequestId appUpdate incoming msg model =
     case msg of
         GotRequest raw ->
             raw
@@ -42,7 +43,7 @@ update middlewares appUpdate appIncoming msg model =
                                 middlewares |> Middleware.run model.context request Response.new
 
                             ( conn, appCmds ) =
-                                appIncoming model.context request (response |> Response.setHeader "X-Powered-By" "elm-express")
+                                incoming model.context request (response |> Response.setHeader "X-Powered-By" "elm-express")
 
                             requestId =
                                 Request.id request
@@ -57,31 +58,34 @@ update middlewares appUpdate appIncoming msg model =
         GotPoolDrop uuid ->
             ( { model | pool = model.pool |> Dict.remove uuid }, Cmd.none )
 
-        AppMsg _ _ ->
-            ( model, Cmd.none )
+        AppMsg requestId appMsg ->
+            model.pool
+                |> Dict.get requestId
+                |> Maybe.map (\conn -> appUpdate model.context appMsg conn)
+                |> Maybe.map
+                    (\( conn, cmds ) ->
+                        ( { model | pool = model.pool |> Dict.insert (Request.id conn.request) conn }
+                        , cmds |> Cmd.map (AppMsg (Request.id conn.request))
+                        )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
 
         FromPort appMsg ->
-            let
-                ( nextConn, appCmds ) =
-                    appUpdate appMsg model
-            in
-            nextConn
+            appMsg
+                |> decodeRequestId
+                |> Maybe.andThen (\requestId -> Dict.get requestId model.pool)
+                |> Maybe.map (\conn -> appUpdate model.context appMsg conn)
                 |> Maybe.map
-                    (\conn ->
-                        let
-                            requestId =
-                                Request.id conn.request
-
-                            nextModel =
-                                { model | pool = model.pool |> Dict.insert requestId conn }
-                        in
-                        ( nextModel, appCmds |> Cmd.map (AppMsg requestId) )
+                    (\( conn, cmds ) ->
+                        ( { model | pool = model.pool |> Dict.insert (Request.id conn.request) conn }
+                        , cmds |> Cmd.map (AppMsg (Request.id conn.request))
+                        )
                     )
                 |> Maybe.withDefault ( model, Cmd.none )
 
 
 type alias AppIncoming ctx msg model =
-    ctx -> Request.Request -> Response.Response -> ( Conn.Conn model, Cmd msg )
+    ctx -> Request.Request -> Response.Response -> ( Conn.Conn model, Cmd.Cmd msg )
 
 
 type alias AppInit flags ctx =
@@ -89,17 +93,22 @@ type alias AppInit flags ctx =
 
 
 type alias AppUpdate msg model ctx =
-    msg -> Model model ctx -> ( Maybe (Conn.Conn model), Cmd msg )
+    ctx -> msg -> Conn.Conn model -> ( Conn.Conn model, Cmd msg )
+
+
+type alias AppDecodeRequestId msg =
+    msg -> Maybe String
 
 
 type alias ApplicationParams flags ctx msg model =
     { requestPort : (D.Value -> Msg msg) -> Sub.Sub (Msg msg)
     , responsePort : E.Value -> Cmd.Cmd (Msg msg)
     , poolPort : (String -> Msg msg) -> Sub.Sub (Msg msg)
-    , incoming : AppIncoming ctx msg model
     , init : AppInit flags ctx
-    , subscriptions : Sub.Sub msg
+    , incoming : AppIncoming ctx msg model
+    , decodeRequestId : AppDecodeRequestId msg
     , update : AppUpdate msg model ctx
+    , subscriptions : Sub.Sub msg
     , middlewares : List (Middleware.Middleware ctx)
     }
 
@@ -117,6 +126,6 @@ application params =
     in
     Platform.worker
         { init = \flags -> ( Model Dict.empty (params.init flags), Cmd.none )
-        , update = update params.middlewares params.update params.incoming
+        , update = update params.middlewares params.decodeRequestId params.update params.incoming
         , subscriptions = subs
         }
