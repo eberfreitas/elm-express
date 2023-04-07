@@ -220,9 +220,9 @@ update _ msg conn =
                 |> Result.withDefault ( conn, Cmd.none )
 
 
-dummyHeaderMiddleware : () -> Request.Request -> Response.Response -> Response.Response
+dummyHeaderMiddleware : () -> Request.Request -> Response.Response -> ( Response.Response, Cmd.Cmd Msg )
 dummyHeaderMiddleware _ _ response =
-    response |> Response.setHeader "X-Dummy" "Never argue with the data."
+    ( response |> Response.setHeader "X-Dummy" "Never argue with the data.", Cmd.none )
 
 
 decodeRequestId : Msg -> Maybe String

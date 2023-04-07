@@ -4,15 +4,23 @@ import Express.Request as Request
 import Express.Response as Response
 
 
-type alias Middleware ctx =
-    ctx -> Request.Request -> Response.Response -> Response.Response
+type alias Middleware ctx msg =
+    ctx -> Request.Request -> Response.Response -> ( Response.Response, Cmd.Cmd msg )
 
 
-run : ctx -> Request.Request -> Response.Response -> List (Middleware ctx) -> Response.Response
+run : ctx -> Request.Request -> Response.Response -> List (Middleware ctx msg) -> ( Response.Response, Cmd.Cmd msg )
 run context request response middlewares =
-    case middlewares of
-        running :: toRun ->
-            run context request (running context request response) toRun
+    let
+        recurse ctx req res cmds mws =
+            case mws of
+                running :: toRun ->
+                    let
+                        ( newRes, newCmds ) =
+                            running ctx req res
+                    in
+                    recurse ctx req newRes (Cmd.batch [ cmds, newCmds ]) toRun
 
-        [] ->
-            response
+                [] ->
+                    ( res, cmds )
+    in
+    recurse context request response Cmd.none middlewares

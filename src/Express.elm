@@ -24,7 +24,7 @@ type Msg msg
 
 
 update :
-    List (Middleware.Middleware ctx)
+    List (Middleware.Middleware ctx msg)
     -> AppDecodeRequestId msg
     -> AppUpdate msg model ctx
     -> AppIncoming ctx msg model
@@ -39,7 +39,7 @@ update middlewares decodeRequestId appUpdate incoming msg model =
                 |> Result.map
                     (\request ->
                         let
-                            response =
+                            ( response, mwCmds ) =
                                 middlewares |> Middleware.run model.context request Response.new
 
                             ( conn, appCmds ) =
@@ -51,7 +51,7 @@ update middlewares decodeRequestId appUpdate incoming msg model =
                             nextModel =
                                 { model | pool = model.pool |> Dict.insert (Request.id request) conn }
                         in
-                        ( nextModel, Cmd.map (AppMsg requestId) appCmds )
+                        ( nextModel, Cmd.map (AppMsg requestId) (Cmd.batch [ mwCmds, appCmds ]) )
                     )
                 |> Result.withDefault ( model, Cmd.none )
 
@@ -109,7 +109,7 @@ type alias ApplicationParams flags ctx msg model =
     , decodeRequestId : AppDecodeRequestId msg
     , update : AppUpdate msg model ctx
     , subscriptions : Sub.Sub msg
-    , middlewares : List (Middleware.Middleware ctx)
+    , middlewares : List (Middleware.Middleware ctx msg)
     }
 
 
