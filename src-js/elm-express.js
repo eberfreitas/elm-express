@@ -17,7 +17,15 @@ function buildSessionData(data) {
     }, {});
 }
 
-module.exports = function elmExpress({ app, secret, sessionConfig, reqCallback, port = 3000, mountingRoute = "/" }) {
+module.exports = function elmExpress({
+  app,
+  secret,
+  sessionConfig,
+  reqCallback,
+  timeout = 5000,
+  port = 3000,
+  mountingRoute = "/",
+}) {
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
       // TODO: docs here?
@@ -25,13 +33,29 @@ module.exports = function elmExpress({ app, secret, sessionConfig, reqCallback, 
     }
   });
 
+  setInterval(() => {
+    const now = Date.now();
+
+    Object.keys(POOL)
+      .forEach((id) => {
+        const [time, _, res] = POOL[id];
+
+        if ((time + timeout) > now) return;
+
+        res.status(500).type("text/plain").send("Timeout");
+        app.ports.poolPort.send(id);
+
+        delete POOL[id];
+      });
+  }, timeout);
+
   const server = express();
 
   server.use(cookieParser(secret));
   server.use(session({ ...sessionConfig, secret }));
 
   app.ports.responsePort.subscribe(({ id, response }) => {
-    const [req, res] = POOL[id] || [null, null];
+    const [_, req, res] = POOL[id] || [null, null, null];
 
     if (!req || !res) return;
 
@@ -97,7 +121,7 @@ module.exports = function elmExpress({ app, secret, sessionConfig, reqCallback, 
           session: buildSessionData(req.session),
         };
 
-        POOL[id] = [req, res];
+        POOL[id] = [now, req, res];
 
         if (reqCallback) {
           reqCallback(req, res);
