@@ -1,6 +1,5 @@
 port module Main exposing (main)
 
-import Dict
 import Express
 import Express.Conn as Conn
 import Express.Cookie as Cookie
