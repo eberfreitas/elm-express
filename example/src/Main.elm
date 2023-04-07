@@ -195,8 +195,7 @@ update _ msg conn =
         GotReverse raw ->
             raw
                 |> D.decodeValue (D.field "reversed" D.string)
-                |> Result.toMaybe
-                |> Maybe.map
+                |> Result.map
                     (\reversed ->
                         let
                             nextConn =
@@ -204,7 +203,7 @@ update _ msg conn =
                         in
                         ( nextConn, nextConn.response |> Response.send (Request.id conn.request) |> responsePort )
                     )
-                |> Maybe.withDefault ( conn, Cmd.none )
+                |> Result.withDefault ( conn, Cmd.none )
 
         GotTask result ->
             result
