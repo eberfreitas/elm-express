@@ -5,6 +5,10 @@ import Express.Conn as Conn
 import Express.Cookie as Cookie
 import Express.Request as Request
 import Express.Response as Response
+import Html.String as Html
+import Html.String.Attributes as Attributes
+import Html.String.Extra as EHtml
+import Html.String.Extra.Document as Document
 import Http
 import Json.Decode as D
 import Json.Encode as E
@@ -40,6 +44,7 @@ type Model
     | UnsetSession String
     | Redirect
     | Task
+    | Html
 
 
 type Msg
@@ -61,6 +66,7 @@ route =
         , Parser.map UnsetSession (Parser.s "session" </> Parser.s "unset" </> Parser.string)
         , Parser.map Redirect (Parser.s "redirect")
         , Parser.map Task (Parser.s "task")
+        , Parser.map Html (Parser.s "html")
         ]
 
 
@@ -174,6 +180,13 @@ incoming _ request response =
                     in
                     ( response, nextCmd )
 
+                ( Request.GET, Html ) ->
+                    let
+                        res =
+                            response |> Response.map (Response.html htmlView)
+                    in
+                    ( res, respond res )
+
                 _ ->
                     let
                         res =
@@ -182,6 +195,22 @@ incoming _ request response =
                     ( res, respond res )
     in
     ( { request = request, response = nextResponse, model = model }, cmd )
+
+
+htmlView : String
+htmlView =
+    Document.new [ Attributes.lang "en" ]
+        (EHtml.head []
+            [ EHtml.title [] "elm-express"
+            , EHtml.link
+                [ Attributes.rel "stylesheet"
+                , Attributes.href "https://unpkg.com/sakura.css/css/sakura.css"
+                , Attributes.type_ "text/css"
+                ]
+            ]
+        )
+        (EHtml.body [] [ Html.div [] [ Html.h1 [] [ Html.text "Hello from elm-express!" ] ] ])
+        |> Document.toString
 
 
 subscriptions : Sub Msg
