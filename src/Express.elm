@@ -1,4 +1,13 @@
-module Express exposing (Model, Msg, application)
+module Express exposing
+    ( AppDecodeRequestId
+    , AppIncoming
+    , AppInit
+    , AppUpdate
+    , ApplicationParams
+    , Model
+    , Msg
+    , application
+    )
 
 import Dict
 import Express.Conn as Conn
@@ -45,9 +54,11 @@ update middlewares decodeRequestId appUpdate incoming msg model =
                             ( conn, appCmds ) =
                                 incoming model.context request (response |> Response.setHeader "X-Powered-By" "elm-express")
 
+                            requestId : String
                             requestId =
                                 Request.id request
 
+                            nextModel : Model model ctx
                             nextModel =
                                 { model | pool = model.pool |> Dict.insert (Request.id request) conn }
                         in

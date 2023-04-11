@@ -226,6 +226,7 @@ encodeRedirect redirect_ =
 encodeBody : Body -> E.Value
 encodeBody body =
     let
+        mime: E.Value
         mime =
             body |> bodyToMIMEType |> E.string
     in
@@ -243,6 +244,7 @@ encodeBody body =
 encode : Response -> E.Value
 encode response =
     let
+        res : InternalResponse
         res =
             extractInternalResponse response
     in

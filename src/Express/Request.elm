@@ -47,6 +47,7 @@ type Request
 methodMap : Dict.Dict String Method
 methodMap =
     let
+        helper : List ( String, Method ) -> List ( String, Method )
         helper list =
             case List.head list of
                 Nothing ->

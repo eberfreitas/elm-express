@@ -11,6 +11,13 @@ type alias Middleware ctx msg =
 run : ctx -> Request.Request -> Response.Response -> List (Middleware ctx msg) -> ( Response.Response, Cmd.Cmd msg )
 run context request response middlewares =
     let
+        recurse :
+            ctx
+            -> Request.Request
+            -> Response.Response
+            -> Cmd.Cmd msg
+            -> List (Middleware ctx msg)
+            -> ( Response.Response, Cmd.Cmd msg )
         recurse ctx req res cmds mws =
             case mws of
                 running :: toRun ->

@@ -1,8 +1,7 @@
-module Html.String.Extra.Document exposing (..)
+module Html.String.Extra.Document exposing (Document, new, toString)
 
 import Html.String as Html
 import Html.String.Extra as EHtml
-import List exposing (head)
 
 
 type Document msg
@@ -22,4 +21,4 @@ toString : Document msg -> String
 toString (Document { htmlAttributes, head, body }) =
     EHtml.html htmlAttributes [ head, body ]
         |> Html.toString 0
-        |> (++) "<!DOCTYPE html>\n"
+        |> (\doc -> "<!DOCTYPE html>\n" ++ doc)
