@@ -12,6 +12,7 @@
   "dependencies": {
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
+    "elm-review": "^2.9.2",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "uuid": "^9.0.0",
