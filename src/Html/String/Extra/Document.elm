@@ -21,5 +21,5 @@ new htmlAttrs head body =
 toString : Document msg -> String
 toString (Document { htmlAttributes, head, body }) =
     EHtml.html htmlAttributes [ head, body ]
-        |> Html.toString 2
+        |> Html.toString 0
         |> (++) "<!DOCTYPE html>\n"

@@ -1,6 +1,7 @@
 module Express.Request exposing
     ( Method(..)
     , Request
+    , body
     , cookie
     , cookies
     , decode
@@ -156,3 +157,8 @@ cookie key (Request req) =
 session : String -> Request -> Maybe String
 session key (Request req) =
     Dict.get key req.session
+
+
+body : Request -> String
+body (Request req) =
+    req.body

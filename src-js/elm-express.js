@@ -1,5 +1,6 @@
 const XMLHttpRequest = require('xhr2');
 const express = require("express");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const { v4: uuidv4 } = require('uuid');
@@ -98,25 +99,23 @@ module.exports = function elmExpress({
 
   const elmExtension = {
     start: (callback) => {
-      server.all(`${mountingRoute}*`, (req, res) => {
+      server.all(`${mountingRoute}*`, bodyParser.text({type: "*/*"}), (req, res) => {
         const id = uuidv4();
         const now = Date.now();
 
         let body = req.body || "";
 
-        if (Object.keys(body).length === 0) {
+        if (Object.keys(body).length < 1) {
           body = "";
-        } else if (typeof body !== "string") {
-          body = JSON.stringify(body);
         }
 
         const request = {
           id,
           now,
+          body,
           method: req.method,
           url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
           headers: req.headers,
-          body,
           cookies: { ...req.cookies, ...req.signedCookies },
           session: buildSessionData(req.session),
         };

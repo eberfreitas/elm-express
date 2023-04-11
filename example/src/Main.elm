@@ -6,8 +6,8 @@ import Express.Cookie as Cookie
 import Express.Request as Request
 import Express.Response as Response
 import Html.String as Html
-import Html.String.Attributes as Attributes
-import Html.String.Extra as EHtml
+import Html.String.Attributes as Attrs
+import Html.String.Extra as HtmlX
 import Html.String.Extra.Document as Document
 import Http
 import Json.Decode as D
@@ -183,7 +183,14 @@ incoming _ request response =
                 ( Request.GET, Html ) ->
                     let
                         res =
-                            response |> Response.map (Response.html htmlView)
+                            response |> Response.map (Response.html (htmlView Nothing))
+                    in
+                    ( res, respond res )
+
+                ( Request.POST, Html ) ->
+                    let
+                        res =
+                            response |> Response.map (Response.html (htmlView (Request.body request |> Just)))
                     in
                     ( res, respond res )
 
@@ -197,19 +204,56 @@ incoming _ request response =
     ( { request = request, response = nextResponse, model = model }, cmd )
 
 
-htmlView : String
-htmlView =
-    Document.new [ Attributes.lang "en" ]
-        (EHtml.head []
-            [ EHtml.title [] "elm-express"
-            , EHtml.link
-                [ Attributes.rel "stylesheet"
-                , Attributes.href "https://unpkg.com/sakura.css/css/sakura.css"
-                , Attributes.type_ "text/css"
+htmlView : Maybe String -> String
+htmlView postData =
+    Document.new [ Attrs.lang "en" ]
+        (HtmlX.head []
+            [ HtmlX.title [] "elm-express"
+            , HtmlX.link
+                [ Attrs.rel "stylesheet"
+                , Attrs.href "https://unpkg.com/sakura.css/css/sakura.css"
+                , Attrs.type_ "text/css"
                 ]
             ]
         )
-        (EHtml.body [] [ Html.div [] [ Html.h1 [] [ Html.text "Hello from elm-express!" ] ] ])
+        (HtmlX.body []
+            [ Html.div []
+                [ Html.h1 [] [ Html.text "Hello from elm-express!" ]
+                , Html.p []
+                    [ Html.text
+                        """
+                        This page is being rendered with server-side Elm, which means that the HTML you're seeing is
+                        being generated entirely on the server using Elm code. By using Elm on the server, we're able
+                        to leverage the same powerful language and tooling that we use on the client, making it easier
+                        to build complex and robust web applications.
+                        """
+                    ]
+                , Html.form [ Attrs.method "post", Attrs.action "" ]
+                    [ Html.fieldset []
+                        [ Html.legend [] [ Html.text "Sample form" ]
+                        , Html.div []
+                            [ Html.label [ Attrs.for "name" ] [ Html.text "Your name" ]
+                            , Html.input [ Attrs.id "name", Attrs.name "name", Attrs.style "width" "100%" ] []
+                            ]
+                        , Html.div []
+                            [ Html.label [ Attrs.for "email" ] [ Html.text "Your e-mail" ]
+                            , Html.input [ Attrs.id "email", Attrs.name "email", Attrs.style "width" "100%" ] []
+                            ]
+                        , Html.div [] [ Html.button [ Attrs.type_ "submit" ] [ Html.text "Submit" ] ]
+                        ]
+                    ]
+                , case postData of
+                    Just data ->
+                        Html.div []
+                            [ Html.hr [] []
+                            , Html.pre [] [ Html.text data ]
+                            ]
+
+                    Nothing ->
+                        Html.text ""
+                ]
+            ]
+        )
         |> Document.toString
 
 
