@@ -10,7 +10,6 @@ module Express.Response exposing
     , new
     , rawRedirect
     , redirect
-    , send
     , setCookie
     , setHeader
     , setSession
@@ -130,11 +129,6 @@ lock response =
             response
 
 
-send : String -> Response -> E.Value
-send id response =
-    E.object [ ( "id", E.string id ), ( "response", encode response ) ]
-
-
 status : Status -> Response -> Response
 status status_ response =
     response |> internalMap (\res -> { res | status = status_ })
@@ -226,7 +220,7 @@ encodeRedirect redirect_ =
 encodeBody : Body -> E.Value
 encodeBody body =
     let
-        mime: E.Value
+        mime : E.Value
         mime =
             body |> bodyToMIMEType |> E.string
     in

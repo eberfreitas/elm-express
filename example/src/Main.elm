@@ -81,45 +81,29 @@ encodeToPortReverse id text =
 incoming : () -> Request.Request -> Response.Response -> ( Conn.Conn Model, Cmd Msg )
 incoming _ request response =
     let
-        requestId =
-            Request.id request
-
         requestMethod =
             Request.method request
 
         model =
             request |> Request.url |> Parser.parse route |> Maybe.withDefault NotFound
 
-        respond =
-            Response.send requestId >> responsePort
-
         ( nextResponse, cmd ) =
             case ( requestMethod, model ) of
-                ( Request.GET, HelloWorld ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.text "Hello world!")
-                    in
-                    ( res, respond res )
+                ( Request.Get, HelloWorld ) ->
+                    ( response |> Response.map (Response.text "Hello world!"), Nothing )
 
-                ( Request.GET, Reverse text ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.text (String.reverse text))
-                    in
-                    ( res, respond res )
+                ( Request.Get, Reverse text ) ->
+                    ( response |> Response.map (Response.text (String.reverse text)), Nothing )
 
-                ( Request.GET, PortReverse text ) ->
-                    ( response, requestReverse <| encodeToPortReverse requestId text )
+                ( Request.Get, PortReverse text ) ->
+                    ( response, Just (requestReverse <| encodeToPortReverse (Request.id request) text) )
 
-                ( Request.GET, Cookies ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.json (request |> Request.cookies |> E.dict identity E.string))
-                    in
-                    ( res, respond res )
+                ( Request.Get, Cookies ) ->
+                    ( response |> Response.map (Response.json (request |> Request.cookies |> E.dict identity E.string))
+                    , Nothing
+                    )
 
-                ( Request.GET, SetCookie name value ) ->
+                ( Request.Get, SetCookie name value ) ->
                     let
                         res =
                             response
@@ -128,9 +112,9 @@ incoming _ request response =
                                         >> Response.text ("Cookie - " ++ name ++ ": " ++ value)
                                     )
                     in
-                    ( res, respond res )
+                    ( res, Nothing )
 
-                ( Request.GET, UnsetCookie name ) ->
+                ( Request.Get, UnsetCookie name ) ->
                     let
                         res =
                             response
@@ -143,37 +127,27 @@ incoming _ request response =
                                             |> Maybe.withDefault (response |> Response.text "No cookie found")
                                     )
                     in
-                    ( res, respond res )
+                    ( res, Nothing )
 
-                ( Request.GET, Session key ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.text (request |> Request.session key |> Maybe.withDefault "Session key not found."))
-                    in
-                    ( res, respond res )
+                ( Request.Get, Session key ) ->
+                    ( response |> Response.map (Response.text (request |> Request.session key |> Maybe.withDefault "Session key not found."))
+                    , Nothing
+                    )
 
-                ( Request.GET, SetSession key value ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.setSession key value >> Response.text ("Session - " ++ key ++ ": " ++ value))
-                    in
-                    ( res, respond res )
+                ( Request.Get, SetSession key value ) ->
+                    ( response |> Response.map (Response.setSession key value >> Response.text ("Session - " ++ key ++ ": " ++ value))
+                    , Nothing
+                    )
 
-                ( Request.GET, UnsetSession key ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.unsetSession key >> Response.text ("Session - " ++ key))
-                    in
-                    ( res, respond res )
+                ( Request.Get, UnsetSession key ) ->
+                    ( response |> Response.map (Response.unsetSession key >> Response.text ("Session - " ++ key))
+                    , Nothing
+                    )
 
-                ( Request.GET, Redirect ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.redirect "/")
-                    in
-                    ( res, respond res )
+                ( Request.Get, Redirect ) ->
+                    ( response |> Response.map (Response.redirect "/"), Nothing )
 
-                ( Request.GET, Task ) ->
+                ( Request.Get, Task ) ->
                     let
                         nextCmd =
                             Http.get
@@ -181,30 +155,21 @@ incoming _ request response =
                                 , expect = Http.expectString GotTask
                                 }
                     in
-                    ( response, nextCmd )
+                    ( response, Just nextCmd )
 
-                ( Request.GET, Html ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.html (htmlView Nothing))
-                    in
-                    ( res, respond res )
+                ( Request.Get, Html ) ->
+                    ( response |> Response.map (Response.html (htmlView Nothing)), Nothing )
 
-                ( Request.POST, Html ) ->
-                    let
-                        res =
-                            response |> Response.map (Response.html (htmlView (Request.body request |> Just)))
-                    in
-                    ( res, respond res )
+                ( Request.Post, Html ) ->
+                    ( response |> Response.map (Response.html (htmlView (Request.body request |> Just))), Nothing )
 
                 _ ->
-                    let
-                        res =
-                            response |> Response.map (Response.status Response.NotFound >> Response.text "Not found")
-                    in
-                    ( res, respond res )
+                    ( response |> Response.map (Response.status Response.NotFound >> Response.text "Not found"), Nothing )
+
+        conn =
+            { request = request, response = nextResponse, model = model }
     in
-    ( { request = request, response = nextResponse, model = model }, cmd )
+    ( conn, cmd |> Maybe.withDefault (conn |> Conn.send |> responsePort) )
 
 
 htmlView : Maybe String -> String
@@ -277,7 +242,7 @@ update _ msg conn =
                             nextConn =
                                 { conn | response = conn.response |> Response.map (Response.text reversed) }
                         in
-                        ( nextConn, nextConn.response |> Response.send (Request.id conn.request) |> responsePort )
+                        ( nextConn, nextConn |> Conn.send |> responsePort )
                     )
                 |> Result.withDefault ( conn, Cmd.none )
 
@@ -289,7 +254,7 @@ update _ msg conn =
                             nextConn =
                                 { conn | response = conn.response |> Response.map (Response.text txt) }
                         in
-                        ( nextConn, nextConn.response |> Response.send (Request.id conn.request) |> responsePort )
+                        ( nextConn, nextConn |> Conn.send |> responsePort )
                     )
                 |> Result.withDefault ( conn, Cmd.none )
 

@@ -64,8 +64,8 @@ module.exports = function elmExpress({
     }
   });
 
-  app.ports.responsePort.subscribe(({ id, response }) => {
-    const [_, req, res] = POOL[id] || [null, null, null];
+  app.ports.responsePort.subscribe(({ requestId, response }) => {
+    const [_, req, res] = POOL[requestId] || [null, null, null];
 
     if (!req || !res) return;
 
@@ -95,9 +95,9 @@ module.exports = function elmExpress({
       response.sessionUnset.forEach((k) => delete req.session[k]);
     }
 
-    delete POOL[id];
+    delete POOL[requestId];
 
-    app.ports.poolPort.send(id);
+    app.ports.poolPort.send(requestId);
 
     if (response.redirect) {
       res.redirect(response.redirect.code, response.redirect.path);

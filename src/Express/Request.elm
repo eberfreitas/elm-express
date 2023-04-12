@@ -23,12 +23,12 @@ import Url
 
 
 type Method
-    = GET
-    | HEAD
-    | POST
-    | PUT
-    | DELETE
-    | PATCH
+    = Get
+    | Head
+    | Post
+    | Put
+    | Delete
+    | Patch
 
 
 type Request
@@ -51,24 +51,24 @@ methodMap =
         helper list =
             case List.head list of
                 Nothing ->
-                    ( "GET", GET ) :: list |> helper
+                    ( "GET", Get ) :: list |> helper
 
-                Just ( _, GET ) ->
-                    ( "HEAD", HEAD ) :: list |> helper
+                Just ( _, Get ) ->
+                    ( "HEAD", Head ) :: list |> helper
 
-                Just ( _, HEAD ) ->
-                    ( "POST", POST ) :: list |> helper
+                Just ( _, Head ) ->
+                    ( "POST", Post ) :: list |> helper
 
-                Just ( _, POST ) ->
-                    ( "PUT", PUT ) :: list |> helper
+                Just ( _, Post ) ->
+                    ( "PUT", Put ) :: list |> helper
 
-                Just ( _, PUT ) ->
-                    ( "DELETE", DELETE ) :: list |> helper
+                Just ( _, Put ) ->
+                    ( "DELETE", Delete ) :: list |> helper
 
-                Just ( _, DELETE ) ->
-                    ( "PATCH", PATCH ) :: list |> helper
+                Just ( _, Delete ) ->
+                    ( "PATCH", Patch ) :: list |> helper
 
-                Just ( _, PATCH ) ->
+                Just ( _, Patch ) ->
                     list
     in
     [] |> helper |> Dict.fromList
