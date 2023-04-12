@@ -110,9 +110,9 @@ decode =
         (D.field "session" (D.keyValuePairs D.string) |> D.map Dict.fromList)
 
 
-decodeRequestId : D.Value -> Maybe String
+decodeRequestId : D.Value -> Result D.Error String
 decodeRequestId raw =
-    raw |> D.decodeValue (D.field "requestId" D.string) |> Result.toMaybe
+    raw |> D.decodeValue (D.field "requestId" D.string)
 
 
 id : Request -> String

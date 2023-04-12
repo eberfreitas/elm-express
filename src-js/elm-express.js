@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 global.XMLHttpRequest = XMLHttpRequest;
 
 const POOL = {};
-const REQUIRED_PORTS = ["requestPort", "responsePort", "poolPort"];
+const REQUIRED_PORTS = ["requestPort", "responsePort", "poolPort", "errorPort"];
 
 function buildSessionData(data) {
   return Object.keys(data)
@@ -22,7 +22,8 @@ module.exports = function elmExpress({
   app,
   secret,
   sessionConfig,
-  reqCallback,
+  requestCallback,
+  errorCallback,
   timeout = 5000,
   port = 3000,
   mountingRoute = "/",
@@ -54,6 +55,14 @@ module.exports = function elmExpress({
 
   server.use(cookieParser(secret));
   server.use(session({ ...sessionConfig, secret }));
+
+  app.ports.errorPort.subscribe((error) => {
+    if (errorCallback) {
+      errorCallback(error);
+    } else {
+      console.error(error);
+    }
+  });
 
   app.ports.responsePort.subscribe(({ id, response }) => {
     const [_, req, res] = POOL[id] || [null, null, null];
@@ -105,7 +114,7 @@ module.exports = function elmExpress({
 
         let body = req.body || "";
 
-        if (Object.keys(body).length < 1) {
+        if (Object.keys(body).length === 0) {
           body = "";
         }
 
@@ -122,8 +131,8 @@ module.exports = function elmExpress({
 
         POOL[id] = [now, req, res];
 
-        if (reqCallback) {
-          reqCallback(req, res);
+        if (requestCallback) {
+          requestCallback(req, res);
         }
 
         app.ports.requestPort.send(request);

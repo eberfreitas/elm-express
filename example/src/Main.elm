@@ -25,6 +25,9 @@ port poolPort : (String -> msg) -> Sub.Sub msg
 port responsePort : E.Value -> Cmd.Cmd msg
 
 
+port errorPort : String -> Cmd.Cmd msg
+
+
 port requestReverse : E.Value -> Cmd.Cmd msg
 
 
@@ -296,14 +299,14 @@ dummyHeaderMiddleware _ _ response =
     ( response |> Response.setHeader "X-Dummy" "Never argue with the data.", Cmd.none )
 
 
-decodeRequestId : Msg -> Maybe String
+decodeRequestId : Msg -> Result D.Error String
 decodeRequestId msg =
     case msg of
         GotReverse raw ->
             Request.decodeRequestId raw
 
         _ ->
-            Nothing
+            Err <| D.Failure "Decoder not implemented" E.null
 
 
 main : Program () (Express.Model Model ()) (Express.Msg Msg)
@@ -312,6 +315,7 @@ main =
         { init = \_ -> ()
         , requestPort = requestPort
         , responsePort = responsePort
+        , errorPort = errorPort
         , poolPort = poolPort
         , incoming = incoming
         , subscriptions = subscriptions
