@@ -1,6 +1,6 @@
 module Express.Cookie exposing
     ( Cookie
-    , SameSite
+    , SameSite(..)
     , domain
     , httpOnly
     , maxAge
