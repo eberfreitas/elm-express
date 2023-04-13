@@ -1,6 +1,7 @@
 module Express.Cookie exposing
-    ( new
-    , Cookie, SameSite(..), domain, httpOnly, maxAge, path, sameSite, secure, signed
+    ( Cookie, SameSite(..)
+    , new
+    , domain, maxAge, httpOnly, path, secure, signed, sameSite
     )
 
 {-| This module provides a set of types and functions that allow you to manage cookies in your `elm-express`
@@ -15,7 +16,7 @@ Express.js [documentation](https://expressjs.com/en/4x/api.html#res.cookie) surr
 
 # Types
 
-@docs Cookie SameSite
+@docs Cookie, SameSite
 
 
 # Creating a cookie
@@ -25,7 +26,7 @@ Express.js [documentation](https://expressjs.com/en/4x/api.html#res.cookie) surr
 
 # Handling cookies
 
-@docs domain maxAge httpOnly path secure signed sameSite
+@docs domain, maxAge, httpOnly, path, secure, signed, sameSite
 
 -}
 

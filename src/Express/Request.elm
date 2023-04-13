@@ -1,6 +1,7 @@
 module Express.Request exposing
-    ( decodeRequestId
-    , Method(..), Request, body, cookie, cookies, header, headers, id, method, now, session, url
+    ( Request, Method(..)
+    , id, method, url, body, now, headers, header, cookies, cookie, session
+    , decodeRequestId
     )
 
 {-| This module exposes ways of dealing with requests. Requests are only "acquired" when a new request incomes to the
@@ -12,12 +13,12 @@ Everything should be "read-only" so there is no way to change a request, only re
 
 # Types
 
-@docs Request Method
+@docs Request, Method
 
 
 # Reading from requests
 
-@docs id method url body now headers header cookies cookie session
+@docs id, method, url, body, now, headers, header, cookies, cookie, session
 
 
 # Helpers
