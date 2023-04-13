@@ -54,12 +54,7 @@ new request name value maxAge_ =
         , maxAge = maxAge_
         , httpOnly = True
         , path = "/"
-        , secure =
-            if request |> Request.url |> .protocol |> (==) Url.Https then
-                True
-
-            else
-                False
+        , secure = request |> Request.url |> .protocol |> (==) Url.Https
         , signed = True
         , sameSite = "Strict"
         }

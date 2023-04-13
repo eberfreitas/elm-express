@@ -11,6 +11,7 @@ module Express exposing
 
 import Dict
 import Express.Conn as Conn
+import Express.Internal.Request as InternalRequest
 import Express.Middleware as Middleware
 import Express.Request as Request
 import Express.Response as Response
@@ -48,7 +49,7 @@ update :
 update errorPort middlewares decodeRequestId appUpdate incoming msg model =
     case msg of
         GotRequest raw ->
-            case D.decodeValue Request.decode raw of
+            case D.decodeValue InternalRequest.decode raw of
                 Ok request ->
                     let
                         ( response, mwCmds ) =
