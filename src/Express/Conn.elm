@@ -47,4 +47,4 @@ appropriate data.
 -}
 send : Conn model -> E.Value
 send conn =
-    E.object [ ( "requestId", E.string (Request.id conn.request) ), ( "response", Response.encode conn.response ) ]
+    Response.send conn.request conn.response

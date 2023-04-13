@@ -2,7 +2,6 @@ module Express.Response exposing
     ( Redirect(..)
     , Response
     , Status(..)
-    , encode
     , html
     , json
     , lock
@@ -10,6 +9,7 @@ module Express.Response exposing
     , new
     , rawRedirect
     , redirect
+    , send
     , setCookie
     , setHeader
     , setSession
@@ -21,6 +21,7 @@ module Express.Response exposing
 
 import Dict
 import Express.Internal.Cookie as Cookie
+import Express.Request as Request
 import Json.Encode as E
 
 
@@ -252,3 +253,8 @@ encode response =
         , ( "sessionUnset", res.sessionUnset |> E.list E.string )
         , ( "redirect", res.redirect |> encodeRedirect )
         ]
+
+
+send : Request.Request -> Response -> E.Value
+send request response =
+    E.object [ ( "requestId", E.string (Request.id request) ), ( "response", encode response ) ]
