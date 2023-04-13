@@ -20,7 +20,7 @@ module Express.Response exposing
     )
 
 import Dict
-import Express.Cookie as Cookie
+import Express.Internal.Cookie as Cookie
 import Json.Encode as E
 
 
