@@ -19,8 +19,12 @@ import Json.Encode as E
 import Platform.Sub as Sub
 
 
+type alias Pool model =
+    Dict.Dict String (Conn.Conn model)
+
+
 type alias Model model ctx =
-    { pool : Conn.Pool model
+    { pool : Pool model
     , context : ctx
     }
 
