@@ -12,7 +12,6 @@ module Express.Request exposing
     , method
     , now
     , session
-    , stringToMethod
     , url
     )
 

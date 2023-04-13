@@ -46,9 +46,10 @@ type alias Middleware ctx msg =
 function as a reducer or folding function that will aggregate the transformations from all middlewares into a single
 `( response, command )` tuple.
 
-    middlewares =
-        [ flashMsgMiddleware, authMiddleware ]
-
+    let
+        middlewares =
+            [ flashMsgMiddleware, authMiddleware ]
+    in
     ( newResponse, newCmd ) =
         run context request response middlewares
 
