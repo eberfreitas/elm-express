@@ -3,9 +3,9 @@ module Express.Conn exposing
     , send
     )
 
-{-| This module exposes the `Conn` type, which represents the combination of three types: `Express.Request`,
-`Express.Response`, and your application's model/state. The `Conn` type is used to conveniently pass the request
-information through your application's functions.
+{-| This module provides access to the Conn type, which combines three types: `Express.Request`, `Express.Response`, and
+your application's model/state. The `Conn` type is designed to easily transfer request information through your
+application's functions.
 
 
 # Types
