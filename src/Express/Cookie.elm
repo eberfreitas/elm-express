@@ -173,6 +173,7 @@ signed =
 sameSite : SameSite -> Cookie -> Cookie
 sameSite sameSite_ =
     let
+        sameSiteString : String
         sameSiteString =
             case sameSite_ of
                 None ->

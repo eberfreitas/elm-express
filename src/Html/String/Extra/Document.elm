@@ -1,6 +1,6 @@
 module Html.String.Extra.Document exposing
-    ( new, toString
-    , Document
+    ( Document
+    , new, toString
     )
 
 {-| This module attempts to expose a type-safe way of describing a full HTML document.
@@ -8,7 +8,7 @@ module Html.String.Extra.Document exposing
 
 # Type
 
-@ docs Document
+@docs Document
 
 
 # Creating a document
@@ -33,8 +33,8 @@ type Document msg
 
 
 {-| This function creates a new document. It receives a list of attributes for the root element (`<html>`), the `<head>`
-HTML node and the `<body` HTML node. After creating your `Document`, you can convert it to a string using the `toString`
-function.
+HTML node and the `<body>` HTML node. After creating your `Document`, you can convert it to a string using the
+`toString` function.
 -}
 new : List (Html.Attribute msg) -> Html.Html msg -> Html.Html msg -> Document msg
 new htmlAttrs head body =

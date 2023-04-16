@@ -57,7 +57,8 @@ providing type safety to the response definition.
 -}
 
 import Dict
-import Express.Internal.Cookie as Cookie
+import Express.Cookie as Cookie
+import Express.Internal.Cookie as InternalCookie
 import Express.Request as Request
 import Json.Encode as E
 
@@ -408,8 +409,8 @@ encode response =
         [ ( "status", res.status |> statusToCode |> E.int )
         , ( "body", res.body |> encodeBody )
         , ( "headers", res.headers |> E.dict identity E.string )
-        , ( "cookieSet", res.cookieSet |> E.list Cookie.encode )
-        , ( "cookieUnset", res.cookieUnset |> E.list Cookie.encode )
+        , ( "cookieSet", res.cookieSet |> E.list InternalCookie.encode )
+        , ( "cookieUnset", res.cookieUnset |> E.list InternalCookie.encode )
         , ( "sessionSet", res.sessionSet |> E.dict identity E.string )
         , ( "sessionUnset", res.sessionUnset |> E.list E.string )
         , ( "redirect", res.redirect |> encodeRedirect )

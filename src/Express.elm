@@ -1,11 +1,11 @@
 module Express exposing
     ( application
     , AppInit, AppIncoming, AppUpdate, AppDecodeRequestId, ApplicationParams
-    , Model, Msg
+    , Pool, Model, Msg
     )
 
-{-| Hello 👋 - `elm-express` is a very simple and almost naïve Elm layer on top of Express.js to enable the development
-of backend applications with Elm. This is the main module that will allow you to create your `elm-express` application.
+{-| `elm-express` is a very simple and almost naïve Elm layer on top of Express.js to enable the development of backend
+applications with Elm. This is the main module that will allow you to create your `elm-express` application.
 
 
 # How it works?
@@ -38,7 +38,7 @@ ergonomic and delightful API for backend development with Elm.
 
 # Internal types
 
-@docs Model, Msg
+@docs Pool, Model, Msg
 
 -}
 
@@ -53,16 +53,22 @@ import Json.Encode as E
 import Platform.Sub as Sub
 
 
+{-| Internal connections pool.
+-}
 type alias Pool model =
     Dict.Dict String (Conn.Conn model)
 
 
+{-| Internal model.
+-}
 type alias Model model ctx =
     { pool : Pool model
     , context : ctx
     }
 
 
+{-| Internal messages.
+-}
 type Msg msg
     = GotRequest D.Value
     | GotPoolDrop String
