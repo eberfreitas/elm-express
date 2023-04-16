@@ -4,26 +4,19 @@ module Express exposing
     , Pool, Model, Msg
     )
 
-{-| `elm-express` is a very simple and almost naïve Elm layer on top of Express.js to enable the development of backend
-applications with Elm. This is the main module that will allow you to create your `elm-express` application.
+{-| `elm-express` is an Elm library that provides a lightweight and expressive API for building server-side applications
+on top of the popular Node.js web framework, Express. With `elm-express`, developers can leverage the safety and
+expressiveness of Elm for building web backends in a familiar and powerful environment.
 
 
 # How it works?
 
-The `elm-express` library works as a layer that receives request data from Express.js and allows your Elm app to define
-responses. The Elm application is initialized alongside the Express.js server. Whenever a new request comes in,
-Express.js will send the request through a port (`requestPort`) and once you are ready to respond, you just need to
-route the response through another port (`responsePort`).
+When an incoming request arrives, Express.js sends the request data through a port called `requestPort` to the Elm
+application, which can then define a response and route it through another port called `responsePort`.
 
-Because Elm uses the [actor model](https://en.wikipedia.org/wiki/Actor_model) for message passing, we need to do some
-adjustments in order to couple the request and subsequent response into a single operation pair. To do that we tag all
-requests with an id (UUID v4) and keep a pool of connections tied to that id. Whenever we need to fetch the data from
-a specific request, we can do so by keeping a reference to the request's id.
-
-For the most part, we try to abstract this process by providing helpers and exposing functions to be implemented that
-needs to deal only with a single request. But because we might eventually use `ports` for JS interop, sometimes we need
-to leak those implementation details. We tried to reduce those cases as much as possible in an attempt to provide a very
-ergonomic and delightful API for backend development with Elm.
+To simplify the integration between the Express.js server and the Elm application, `elm-express` comes with a JavaScript
+library that takes care of most of the wiring. The README contains documentation on how to use the library, and the
+`/example` folder in the repository provides a practical demonstration of how to wire everything up.
 
 
 # Creating an `elm-express` application
@@ -145,49 +138,60 @@ update errorPort middlewares decodeRequestId appUpdate incoming msg model =
                     )
 
 
-{-| Describes the `incoming` function that gets called whenever a new request happens. Think of this as the `init` of
-your request process.
+{-| Describes the `incoming` function that gets called whenever a new request happens.
 -}
 type alias AppIncoming ctx msg model =
     ctx -> Request.Request -> Response.Response -> ( Conn.Conn model, Cmd msg )
 
 
-{-| Describes the `init` function that runs on start time of your application. Works just like the `init` function of
-[`Platform.worker`](https://package.elm-lang.org/packages/elm/core/latest/Platform#worker) and is the best opportunity
-to send in some "context" data to be used throughout your application. If there is any data that can be used by your app
-and that should never change (like env vars), you can pass them here as context.
+{-| The `AppInit` type alias represents the `init` function that runs when the application is started. It is similar to
+the `init` function of [`Platform.worker`](https://package.elm-lang.org/packages/elm/core/latest/Platform#worker), and
+provides an opportunity to pass in "context" data that can be used throughout the application.
+
+This is an ideal place to provide any data that will not change during the application's lifecycle, such as environment
+variables. By passing such data as context, you can ensure that it is available to all parts of the application that
+need it.
+
 -}
 type alias AppInit flags ctx =
     flags -> ctx
 
 
-{-| Describes the `update` function of you application for processing messages. In general these messages will be tied
-to port or tasks interactions.
+{-| The `AppUpdate` type alias represents the `update` function of your Elm application. This function is responsible
+for processing messages that are typically tied to port or task interactions.
+
+The update function takes three arguments: a context (`ctx`), a message (`msg`), and a connection (`Conn.Conn model`)
+that represents the current state of the application. Based on these inputs, the function returns a tuple containing a
+new connection (`Conn.Conn model`) and any commands (`Cmd msg`) that should be executed as a result of the message
+processing.
+
 -}
 type alias AppUpdate msg model ctx =
     ctx -> msg -> Conn.Conn model -> ( Conn.Conn model, Cmd msg )
 
 
-{-| Describes the `decodeRequestId` function that gets run whenever we receive a subscription message. With this
-function we extract the request id from the value being passed in, in order to properly select the connection being
-handled by this particular request.
+{-| The `AppDecodeRequestId` type alias represents the `decodeRequestId` function, which is called whenever a
+subscription message is received. This function extracts the request ID from the message value in order to select the
+connection associated with the request.
 -}
 type alias AppDecodeRequestId msg =
     msg -> Result D.Error String
 
 
-{-| Describes all the parameters you need to setup for your application to work. Besides some well known functions like
-`init` and `update` you also need to pass in four different ports that will be used for the wiring of `elm-express`:
+{-| The `ApplicationParams` type alias represents all the parameters that need to be set up for your Elm application to
+work with `elm-express`. In addition to well-known functions like `init` and `update`, you need to provide four
+different ports that will be used for wiring:
 
   - `requestPort`
   - `responsePort`
   - `poolPort`
   - `errorPort`
 
-You can also inform a list of middlewares to run at every request. Please, refer to the `Express.Middleware`
-documentation to better understand how to use it.
+You can also provide a list of middlewares to run at every request. Please refer to the `Express.Middleware`
+documentation to learn how to use middleware.
 
-For a full example on how to instantiate a new application, check the `/example` folder in the repository/source.
+For a full example of how to instantiate a new `ApplicationParams` value, see the `/example` folder in the
+repository/source.
 
 -}
 type alias ApplicationParams flags ctx msg model =
