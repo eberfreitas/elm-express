@@ -1,28 +1,23 @@
 ![elm-express](https://raw.githubusercontent.com/eberfreitas/elm-express/main/elm-express.png)
 # elm-express
 
-`elm-express` is a simple library to enable the usage of Elm in the backend through Express.js. It tries to do as little
-as possible to empower the developer to use both Elm and Express.js in the way that makes the most sense for each
-project.
+`elm-express` is a library that enables the use of Elm in the backend with Express.js. It is designed to provide minimal
+functionality and allow developers to use Elm and Express.js in a way that makes the most sense for their project.
 
-Because this library aims to integrate a Node.js library with Elm, it has two parts:
-
-- The Elm library and;
-- The JavaScript bridge.
-
-To better understand how to use the **Elm library**, please refer to its documentation
+The library consists of two parts: the Elm library and a JavaScript bridge. For instructions on using the
+**Elm library**, please refer to the documentation
 [here](https://package.elm-lang.org/packages/eberfreitas/elm-express/latest/Express).
 
-You can find the documentation for the JavaScript bridge in this README file.
+This README file contains documentation for the JavaScript bridge.
 
 ## Creating an `elm-express` application
 
-So you want to write Elm in the backend. You have already created your application using the `elm-express` Elm library
-and now you need to wire the JavaScript side. Here is what you need to do:
+If you want to write Elm in the backend and have already created your application using the `elm-express` Elm library,
+you'll need to wire up the JavaScript side. Here's how to install the bridge:
 
-### Install the bridge
+### Installing the bridge
 
-Run the following command in you application root:
+To install the `elm-express` JavaScript bridge, run the following command in your application's root directory:
 
 ```bash
 npm install elm-express
@@ -30,8 +25,8 @@ npm install elm-express
 
 ### Create your entry point
 
-Now you can create a file called `index.js` or `server.js` or whatever you fill like is the best name for your
-entry point:
+Next, create your entry point (`index.js` or `server.js`) by requiring the `elm-express` package and initializing your
+Elm application using `Elm.Main.init()`:
 
 ```js
 const elmExpress = require("elm-express");
@@ -53,51 +48,54 @@ server.start(() => {
 });
 ```
 
-This is the smallest possible `elm-express` application. You will probably have to wire some ports if you wanna make
-things interesting. The way to call ports is exactly the same as you would with any normal Elm application and you can
-do that directly using the `app` constant.
+In this example, `elm-express` is initialized with an `app` instance, a `secret` key for signed cookies and session, a
+port number, a session configuration object, and a `requestCallback` function. You can define your `requestCallback`
+function to modify incoming requests before they are handled by your Elm application.
 
-Also, this example assumes that you have compiled your Elm application into a `main.js` file. `elm-express` does not
-have any opinions on how you should build or bundle your application, so feel free to use whatever processes you fill
-the most comfortable with.
+Note that the `app` instance is just a regular Elm application, so you can call ports and manipulate it as you would
+with any normal Elm application.
 
-In the same way that you can define ports an manipulate your Elm `app` freely, the `elm-express` bridge just exposes a
-regular Express.js application. You can use the `server` const as any regular Express.js application. That means that
-you can define routes outside your Elm application, apply middleware and whatnot.
+Also, `elm-express` does not have any opinions on how you should build or bundle your Elm application, so you can use
+any process you feel comfortable with to compile your Elm code.
 
-Notice that calling `server.start()` is akin as calling `server.listen()` if this was a pure Express.js. The `start()`
-method will call `listen()` automatically while setting up all that is needed for our Elm application to properly
-catch requests and send responses.
+### Use your server instance
+
+Finally, you can use your `server` instance as you would with any regular Express.js application. You can define routes,
+apply middleware, and more.
+
+When you're ready to start listening for requests, call `server.start()`, which will automatically set up everything
+needed for your Elm application to properly handle requests and send responses.
 
 ### Parameters
 
-This is a list of the params you can pass to `elmExpress` in order to create your application:
+Here is a list of parameters that you can pass to the elmExpress function to create your application:
 
-- `app`: Should be a reference to your initialized Elm application;
-- `secret`: A random string to be used by the cookie parser an session management libraries;
-- `sessionConfig`: An object with the necessary keys for session config. Check
-  [Express.js docs](http://expressjs.com/en/resources/middleware/session.html) to better understand what is possible to
-  inform here. **Note:** whatever `secret` you pass in this config, it will be overwritten by the top-level `secret` to
-  keep consistency;
-- `requestCallback`: This is a callback function that will be called at every request. Check the
-  [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder to see it in action;
-- `errorCallback`: If there is any internal error, `elm-express` will call this with a `string` describing the issue. If
-  this callback is not informed, we just call `console.error` with the message;
-- `timeout`: If by any reason a request takes more than the `timeout` time (in milliseconds) than we kill that request.
-  Default: `5000`;
-- `port`: Port to bind the server. Default: `3000`;
-- `moutingRoute`: Tells Express.js where to mount our Elm application. Default: `/`.
+- `app`: A reference to your initialized Elm application.
+- `secret`: A random string to be used by the cookie parser and session management libraries.
+- `sessionConfig`: An object with the necessary keys for session configuration. Check the
+  [Express.js documentation](http://expressjs.com/en/resources/middleware/session.html) for more information on what
+  can be configured here. Note that whatever `secret` you pass in this configuration object will be overwritten by the
+  top-level `secret` to ensure consistency.
+- `requestCallback`: A callback function that will be called for every request. Check the
+  [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder for an example of how to use this
+  callback.
+- `errorCallback`: A function that will be called with a string describing any internal errors. If not provided, the
+  `console.error` function will be used to log the error message.
+- `timeout`: The maximum time (in milliseconds) a request can take before it is terminated. The default value is `5000`.
+- `port`: The port to which the server should bind. The default value is `3000`.
+- `mountingRoute`: The route at which the Elm application should be mounted. The default value is `/`.
 
 ## How it works?
 
-When we call `server.start()`, `elm-express` will setup a route `server.all()` using the `moutingRoute`. For a
-`moutingRoute` of `/`, the call will be like `server.all("/*")`. That means that any sub-path will be caught by
-`elm-express` and sent to your Elm application to be handled. `elm-express` does not have a router in place. You can
-use pattern matching to properly build your model using the request's URL as well as other information (like the
-request's method), just like you could do if you were building a client-side SPA.
+When `server.start()` is called in `elm-express`, a route is set up using `server.all()` and the specified
+`mountingRoute`. If the `mountingRoute` is `/`, the call will be `server.all("/*")`. This means that any sub-path will
+be caught by `elm-express` and passed to your Elm application for handling. There is no built-in router in
+`elm-express`, but you can use pattern matching to construct your model using information from the request, such as the
+URL and method, similar to how you would build a client-side SPA.
 
 ## Example
 
-For a full featured example of this library capabilities, you can visit the
-[`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder. There you will have a pretty good
-overview of both the Elm side of the application as well as how to wire it up with JavaScript.
+The [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the `elm-express` repository
+provides a comprehensive example of how to use the library's features. It includes examples of how to use Elm and
+JavaScript together to build a functional application. You can refer to this example to get a better understanding of
+how to use the library and its capabilities.
