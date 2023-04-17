@@ -26,10 +26,10 @@ Run the following command in you application root:
 npm install elm-express
 ```
 
-### Create your entrypoint
+### Create your entry point
 
 Now you can create a file called `index.js` or `server.js` or whatever you fill like is the best name for your
-entrypoing:
+entry point:
 
 ```js
 const elmExpress = require("elm-express");
