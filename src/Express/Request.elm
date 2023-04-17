@@ -55,8 +55,8 @@ type alias Request =
 
 {-| This is a helper function that takes a `Json.Decode.Value` (most likely a JSON object from JavaScript) and extracts
 the `requestId` key from such `Value`. It is very useful when defining the `decodeRequestId` function when creating your
-application with `Express.application`. For an example on how this can be used, check the `/example` folder in the
-repository/source.
+application with `Express.application`. For an example on how this can be used, check the
+[`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository/source.
 -}
 decodeRequestId : D.Value -> Result D.Error String
 decodeRequestId raw =
@@ -93,7 +93,8 @@ Because `elm-express` does not have a dedicated router, you can use the URL data
 you were creating an SPA with Elm. Elm's guide on [Parsing URLs](https://guide.elm-lang.org/webapps/url_parsing.html)
 should be a very good starting point to understand how we can leverage Elm's APIs with `elm-express` for routing.
 
-For a more detailed example, look at the `/example` folder in the repository/source.
+For a more detailed example, look at the [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example)
+folder in the repository/source.
 
     url =
         Express.Request.url request
@@ -105,7 +106,8 @@ url =
 
 
 {-| Returns the request's method. Nice to use when pattern matching for specific routes. For a good example on how this
-could be used, look at the `/example` folder in the repository/source.
+could be used, look at the [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the
+repository/source.
 
     method =
         Express.Request.method request

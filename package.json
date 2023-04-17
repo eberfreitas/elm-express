@@ -2,7 +2,10 @@
   "name": "elm-express",
   "version": "1.0.0",
   "description": "JavaScript bridge to enable the usage of Elm in the backend through Express.js",
-  "main": "src-js/elm-express.js",
+  "main": "src-js/index.js",
+  "files": [
+    "/src-js"
+  ],
   "author": "Éber Freitas Dias <eber.freitas@gmail.com>",
   "license": "MIT",
   "dependencies": {

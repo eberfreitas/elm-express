@@ -250,7 +250,8 @@ json val response =
 you would for front-end code. We also include a `Html.String.Extra` module with `elm-review` to allow you to create
 full HTML documents.
 
-There is a full example in the `/example` folder in the repository/source.
+There is a full example in the [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the
+repository/source.
 
     htmlResponse =
         Express.Response.html "<h1>Hello World</h1>" response

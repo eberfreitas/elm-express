@@ -16,7 +16,8 @@ application, which can then define a response and route it through another port 
 
 To simplify the integration between the Express.js server and the Elm application, `elm-express` comes with a JavaScript
 library that takes care of most of the wiring. The README contains documentation on how to use the library, and the
-`/example` folder in the repository provides a practical demonstration of how to wire everything up.
+[`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository provides a practical
+demonstration of how to wire everything up.
 
 
 # Creating an `elm-express` application
@@ -190,8 +191,8 @@ different ports that will be used for wiring:
 You can also provide a list of middlewares to run at every request. Please refer to the `Express.Middleware`
 documentation to learn how to use middleware.
 
-For a full example of how to instantiate a new `ApplicationParams` value, see the `/example` folder in the
-repository/source.
+For a full example of how to instantiate a new `ApplicationParams` value, see the
+[`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository/source.
 
 -}
 type alias ApplicationParams flags ctx msg model =
@@ -212,7 +213,7 @@ type alias ApplicationParams flags ctx msg model =
 function to create a "headless" Elm application that should be instantiated by a Node.js script.
 
 For a more in-depth understanding of how to use this library and create your own application, take a look at the app in
-the `/example` folder in the repository/source.
+the [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository/source.
 
 -}
 application : ApplicationParams flags ctx msg model -> Program flags (Model model ctx) (Msg msg)

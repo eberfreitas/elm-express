@@ -1,4 +1,4 @@
-![elm-express](elm-express.png)
+![elm-express](https://raw.githubusercontent.com/eberfreitas/elm-express/main/elm-express.png)
 # elm-express
 
 `elm-express` is a simple library to enable the usage of Elm in the backend through Express.js. It tries to do as little
@@ -10,7 +10,8 @@ Because this library aims to integrate a Node.js library with Elm, it has two pa
 - The Elm library and;
 - The JavaScript bridge.
 
-To better understand how to use the Elm library, please refer to its documentation [here](http://example.com).
+To better understand how to use the **Elm library**, please refer to its documentation
+[here](https://package.elm-lang.org/packages/eberfreitas/elm-express/latest/Express).
 
 You can find the documentation for the JavaScript bridge in this README file.
 
@@ -70,18 +71,22 @@ catch requests and send responses.
 
 ### Parameters
 
-This is a table of the params you can pass to `elmExpress` in order to create your application:
+This is a list of the params you can pass to `elmExpress` in order to create your application:
 
-| Parameter | Required? | Default | Description |
-| --- | --- | --- | --- |
-| `app` | ✔️ | - | Should be a reference to your initialized Elm application |
-| `secret` | ✔️ | - | A random string to be used by the cookie parser an session management libraries |
-| `sessionConfig` | ✔️ | - | An object with the necessary keys for session config. Check [Express.js docs](http://expressjs.com/en/resources/middleware/session.html) to better understand what is possible to inform here. **Note:** whatever `secret` you pass in this config, it will be overwritten by the top-level `secret` to keep consistency. |
-| `requestCallback` | ❌ | - | This is a callback function that will be called at every request. Check the `/example` folder to see it in action. |
-| `errorCallback` | ❌ | `console.error` | If there is any internal error, `elm-express` will call this with a `string` describing the issue. If this callback is not informed, we just call `console.error` with the message. |
-| `timeout` | ❌ | `5000` | If by any reason a request takes more than the `timeout` time (in milliseconds) than we kill that request. |
-| `port` | ❌ | `3000` | Port to bind the server. |
-| `moutingRoute` | ❌ | `/` | Tells Express.js where to mount our Elm application. |
+- `app`: Should be a reference to your initialized Elm application;
+- `secret`: A random string to be used by the cookie parser an session management libraries;
+- `sessionConfig`: An object with the necessary keys for session config. Check
+  [Express.js docs](http://expressjs.com/en/resources/middleware/session.html) to better understand what is possible to
+  inform here. **Note:** whatever `secret` you pass in this config, it will be overwritten by the top-level `secret` to
+  keep consistency;
+- `requestCallback`: This is a callback function that will be called at every request. Check the
+  [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder to see it in action;
+- `errorCallback`: `console.error` | If there is any internal error, `elm-express` will call this with a `string`
+  describing the issue. If this callback is not informed, we just call `console.error` with the message;
+- `timeout`: If by any reason a request takes more than the `timeout` time (in milliseconds) than we kill that request.
+  Default: `5000`;
+- `port`: Port to bind the server. Default: `3000`;
+- `moutingRoute`: Tells Express.js where to mount our Elm application. Default: `/`.
 
 ## How it works?
 
