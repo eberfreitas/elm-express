@@ -1,13 +1,9 @@
 {
   "name": "elm-express",
   "version": "1.0.0",
-  "description": "",
+  "description": "JavaScript bridge to enable the usage of Elm in the backend through Express.js",
   "main": "js/elm-express.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
+  "author": "Éber Freitas Dias <eber.freitas@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.20.2",
