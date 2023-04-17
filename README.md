@@ -1,3 +1,4 @@
+![elm-express](elm-express.png)
 # elm-express
 
 `elm-express` is a simple library to enable the usage of Elm in the backend through Express.js. It tries to do as little
@@ -89,3 +90,9 @@ When we call `server.start()`, `elm-express` will setup a route `server.all()` u
 `elm-express` and sent to your Elm application to be handled. `elm-express` does not have a router in place. You can
 use pattern matching to properly build your model using the request's URL as well as other information (like the
 request's method), just like you could do if you were building a client-side SPA.
+
+## Example
+
+For a full featured example of this library capabilities, you can visit the
+[`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder. There you will have a pretty good
+overview of both the Elm side of the application as well as how to wire it up with JavaScript.
