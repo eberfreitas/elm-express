@@ -81,8 +81,8 @@ This is a list of the params you can pass to `elmExpress` in order to create you
   keep consistency;
 - `requestCallback`: This is a callback function that will be called at every request. Check the
   [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder to see it in action;
-- `errorCallback`: `console.error` | If there is any internal error, `elm-express` will call this with a `string`
-  describing the issue. If this callback is not informed, we just call `console.error` with the message;
+- `errorCallback`: If there is any internal error, `elm-express` will call this with a `string` describing the issue. If
+  this callback is not informed, we just call `console.error` with the message;
 - `timeout`: If by any reason a request takes more than the `timeout` time (in milliseconds) than we kill that request.
   Default: `5000`;
 - `port`: Port to bind the server. Default: `3000`;
