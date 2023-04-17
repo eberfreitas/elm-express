@@ -3,7 +3,7 @@
     "name": "eberfreitas/elm-express",
     "summary": "Library that provides server-side support for Elm applications using Express.",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "exposed-modules": [
         "Express",
         "Express.Conn",
