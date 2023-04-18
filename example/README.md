@@ -1,6 +1,6 @@
-# `elm-express` example app
+# elm-express example app
 
-This is a full `elm-express` application that aims to demonstrate most, if not all, of its capabilities.
+This is a full elm-express application that aims to demonstrate most, if not all, of its capabilities.
 
 ## Running the example app
 

@@ -4,23 +4,23 @@ module Express exposing
     , Pool, Model, Msg
     )
 
-{-| `elm-express` is an Elm library that provides a lightweight and expressive API for building server-side applications
-on top of the popular Node.js web framework, Express. With `elm-express`, developers can leverage the safety and
+{-| elm-express is an Elm library that provides a lightweight and expressive API for building server-side applications
+on top of the popular Node.js web framework, Express. With elm-express, developers can leverage the safety and
 expressiveness of Elm for building web backends in a familiar and powerful environment.
 
 
 # How it works?
 
-When an incoming request arrives, Express.js sends the request data through a port called `requestPort` to the Elm
+When an incoming request arrives, Express sends the request data through a port called `requestPort` to the Elm
 application, which can then define a response and route it through another port called `responsePort`.
 
-To simplify the integration between the Express.js server and the Elm application, `elm-express` comes with a JavaScript
+To simplify the integration between the Express server and the Elm application, elm-express comes with a JavaScript
 library that takes care of most of the wiring. The README contains documentation on how to use the library, and the
 [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository provides a practical
 demonstration of how to wire everything up.
 
 
-# Creating an `elm-express` application
+# Creating an elm-express application
 
 @docs application
 
@@ -180,8 +180,8 @@ type alias AppDecodeRequestId msg =
 
 
 {-| The `ApplicationParams` type alias represents all the parameters that need to be set up for your Elm application to
-work with `elm-express`. In addition to well-known functions like `init` and `update`, you need to provide four
-different ports that will be used for wiring:
+work with elm-express. In addition to well-known functions like `init` and `update`, you need to provide four different
+ports that will be used for wiring:
 
   - `requestPort`
   - `responsePort`

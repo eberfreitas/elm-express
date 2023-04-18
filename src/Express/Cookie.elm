@@ -4,14 +4,14 @@ module Express.Cookie exposing
     , domain, maxAge, httpOnly, path, secure, signed, sameSite
     )
 
-{-| This module provides a set of types and functions that allow you to manage cookies in your `elm-express`
-application. This includes setting, reading, and deleting cookies during requests. The module offers a range of options
-for working with cookies, such as setting the expiration date and domain for a cookie. By using the functions provided
-in this module, you can ensure that cookies are managed securely and efficiently within your application.
+{-| This module provides a set of types and functions that allow you to manage cookies in your elm-express application.
+This includes setting, reading, and deleting cookies during requests. The module offers a range of options for working
+with cookies, such as setting the expiration date and domain for a cookie. By using the functions provided in this
+module, you can ensure that cookies are managed securely and efficiently within your application.
 
-It aims to provide a straightforward way to work with cookies in Elm that is based on the Express.js API, while also
+It aims to provide a straightforward way to work with cookies in Elm that is based on the Express API, while also
 including some slight adaptations when necessary. To a more comprehensive understanding it is recommended to read the
-Express.js [documentation](https://expressjs.com/en/4x/api.html#res.cookie) surrounding cookie setting.
+Express [documentation](https://expressjs.com/en/4x/api.html#res.cookie) surrounding cookie setting.
 
 
 # Types
@@ -45,7 +45,7 @@ type SameSite
 
 
 {-| The `Cookie` type is an [opaque type](https://sporto.github.io/elm-patterns/advanced/opaque-types.html) that
-describes a cookie according with Express.js APIs. It contains all the required information on the Express.js
+describes a cookie according with Express APIs. It contains all the required information on the Express
 [documentation](https://expressjs.com/en/4x/api.html#res.cookie) to define a cookie.
 
 One particular difference is that we don't use the `expires` key, only the `maxAge` key. That means you can't specify a

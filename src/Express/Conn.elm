@@ -35,7 +35,7 @@ type alias Conn model =
 
 
 {-| The `send` function is a utility function that encodes a `Conn` into a JSON object that can be sent through the
-`responsePort` of your application. The JavaScript part of `elm-express` expects the JSON object to have a certain
+`responsePort` of your application. The JavaScript part of elm-express expects the JSON object to have a certain
 format, which can be achieved using this function. Once the `Conn` has been encoded, you can use the following pattern
 to send your responses:
 
