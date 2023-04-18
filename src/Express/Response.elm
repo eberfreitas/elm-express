@@ -10,9 +10,9 @@ module Express.Response exposing
     )
 
 {-| This module allows you to create new responses and manipulate them in order to send them to the client. It tries to
-simplify the interaction compared with the original [Express.js API](https://expressjs.com/en/4x/api.html#res) by
-allowing only one way to define things and going to the lowest layers while abstracting some inconsistencies and
-providing type safety to the response definition.
+simplify the interaction compared with the original [Express API](https://expressjs.com/en/4x/api.html#res) by allowing
+only one way to define things and going to the lowest layers while abstracting some inconsistencies and providing type
+safety to the response definition.
 
 
 # Types
@@ -75,9 +75,60 @@ Reference: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status>
 
 -}
 type Status
-    = OK
+    = Continue
+    | SwitchingProtocols
+    | Processing
+    | EarlyHints
+    | OK
+    | Created
+    | Accepted
+    | NonAuthoritativeInformation
+    | NoContent
+    | ResetContent
+    | PartialContent
+    | MultiStatus
+    | AlreadyReported
+    | IMUsed
+    | BadRequest
+    | Unathorized
+    | PaymentRequired
+    | Forbidden
     | NotFound
+    | MethodNotAllowed
+    | NotAcceptable
+    | ProxyAuthenticationRequired
+    | RequestTimeout
+    | Conflict
+    | Gone
+    | LengthRequired
+    | PreconditionFailed
+    | PayloadTooLarge
+    | URITooLong
+    | UnsupportedMediaType
+    | RangeNotSatisfiable
+    | ExpectationFailed
+    | ImATeapot
+    | MisdirectedRequest
+    | UnprocessableContent
+    | ResourceLocked
+    | FailedDependency
+    | TooEarly
+    | UpgradeRequired
+    | PreconditionRequired
+    | TooManyRequests
+    | RequestHeaderFieldsTooLarge
+    | UnavailableForLegalReasons
     | InternalServerError
+    | NotImplemented
+    | BadGateway
+    | ServiceUnavailable
+    | GatewayTimeout
+    | HTTPVersionNotSupported
+    | VariantAlsoNegotiates
+    | InsufficientStorage
+    | LoopDetected
+    | NotExtended
+    | NetworkdAuthenticationRequired
 
 
 {-| The `Redirect` type defines the possible redirection statuses you can use when sending a response.
@@ -86,8 +137,13 @@ Reference: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#redirection
 
 -}
 type Redirect
-    = MovedPermanently String
+    = MultipleChoices String
+    | MovedPermanently String
     | Found String
+    | SeeOther String
+    | NotModified String
+    | TemporaryRedirect String
+    | PermanentRedirect String
 
 
 type alias InternalResponse =
@@ -247,8 +303,8 @@ json val response =
 
 {-| Sets a HTML response. The HTML should be represented as a string but you can use packages like
 [zwilias/elm-html-string](https://package.elm-lang.org/packages/zwilias/elm-html-string/latest/) to generate HTML like
-you would for front-end code. We also include a `Html.String.Extra` module with `elm-review` to allow you to create
-full HTML documents.
+you would for front-end code. We also include a `Html.String.Extra` module with elm-express to allow you to create full
+HTML documents.
 
 There is a full example in the [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the
 repository/source.
@@ -351,24 +407,192 @@ rawRedirect redirect_ response =
 statusToCode : Status -> Int
 statusToCode status_ =
     case status_ of
+        Continue ->
+            100
+
+        SwitchingProtocols ->
+            101
+
+        Processing ->
+            102
+
+        EarlyHints ->
+            103
+
         OK ->
             200
+
+        Created ->
+            201
+
+        Accepted ->
+            202
+
+        NonAuthoritativeInformation ->
+            203
+
+        NoContent ->
+            204
+
+        ResetContent ->
+            205
+
+        PartialContent ->
+            206
+
+        MultiStatus ->
+            207
+
+        AlreadyReported ->
+            208
+
+        IMUsed ->
+            226
+
+        BadRequest ->
+            400
+
+        Unathorized ->
+            401
+
+        PaymentRequired ->
+            402
+
+        Forbidden ->
+            403
 
         NotFound ->
             404
 
+        MethodNotAllowed ->
+            405
+
+        NotAcceptable ->
+            406
+
+        ProxyAuthenticationRequired ->
+            407
+
+        RequestTimeout ->
+            408
+
+        Conflict ->
+            409
+
+        Gone ->
+            410
+
+        LengthRequired ->
+            411
+
+        PreconditionFailed ->
+            412
+
+        PayloadTooLarge ->
+            413
+
+        URITooLong ->
+            414
+
+        UnsupportedMediaType ->
+            415
+
+        RangeNotSatisfiable ->
+            416
+
+        ExpectationFailed ->
+            417
+
+        ImATeapot ->
+            418
+
+        MisdirectedRequest ->
+            421
+
+        UnprocessableContent ->
+            422
+
+        ResourceLocked ->
+            423
+
+        FailedDependency ->
+            424
+
+        TooEarly ->
+            425
+
+        UpgradeRequired ->
+            426
+
+        PreconditionRequired ->
+            428
+
+        TooManyRequests ->
+            429
+
+        RequestHeaderFieldsTooLarge ->
+            431
+
+        UnavailableForLegalReasons ->
+            451
+
         InternalServerError ->
             500
+
+        NotImplemented ->
+            501
+
+        BadGateway ->
+            502
+
+        ServiceUnavailable ->
+            503
+
+        GatewayTimeout ->
+            504
+
+        HTTPVersionNotSupported ->
+            505
+
+        VariantAlsoNegotiates ->
+            506
+
+        InsufficientStorage ->
+            507
+
+        LoopDetected ->
+            508
+
+        NotExtended ->
+            510
+
+        NetworkdAuthenticationRequired ->
+            511
 
 
 redirectToCodeAndPath : Redirect -> ( Int, String )
 redirectToCodeAndPath redirect_ =
     case redirect_ of
+        MultipleChoices path ->
+            ( 300, path )
+
         MovedPermanently path ->
             ( 301, path )
 
         Found path ->
             ( 302, path )
+
+        SeeOther path ->
+            ( 303, path )
+
+        NotModified path ->
+            ( 304, path )
+
+        TemporaryRedirect path ->
+            ( 307, path )
+
+        PermanentRedirect path ->
+            ( 308, path )
 
 
 encodeRedirect : Maybe Redirect -> E.Value
