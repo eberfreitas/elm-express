@@ -1,7 +1,7 @@
 {
   "name": "elm-express",
   "version": "1.0.1",
-  "description": "JavaScript bridge to enable the usage of Elm in the backend through Express.js",
+  "description": "JavaScript bridge to enable the usage of Elm in the backend through Express",
   "main": "src-js/index.js",
   "files": [
     "/src-js"
@@ -11,10 +11,12 @@
   "dependencies": {
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
-    "elm-review": "^2.9.2",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "uuid": "^9.0.0",
     "xhr2": "^0.2.1"
+  },
+  "devDependencies": {
+    "elm-review": "^2.10.0"
   }
 }
