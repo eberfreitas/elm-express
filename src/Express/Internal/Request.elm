@@ -27,6 +27,22 @@ type Method
     | Put
     | Delete
     | Patch
+    | Checkout
+    | Copy
+    | Lock
+    | Merge
+    | Mkactivity
+    | Mkcol
+    | Move
+    | Notify
+    | Options
+    | Purge
+    | Report
+    | Search
+    | Subscribe
+    | Trace
+    | Unlock
+    | Unsubscribe
 
 
 type Request
@@ -67,6 +83,54 @@ methodMap =
                     ( "PATCH", Patch ) :: list |> helper
 
                 Just ( _, Patch ) ->
+                    ( "CHECKOUT", Checkout ) :: list |> helper
+
+                Just ( _, Checkout ) ->
+                    ( "COPY", Copy ) :: list |> helper
+
+                Just ( _, Copy ) ->
+                    ( "LOCK", Lock ) :: list |> helper
+
+                Just ( _, Lock ) ->
+                    ( "MERGE", Merge ) :: list |> helper
+
+                Just ( _, Merge ) ->
+                    ( "MKACTIVITY", Mkactivity ) :: list |> helper
+
+                Just ( _, Mkactivity ) ->
+                    ( "MKCOL", Mkcol ) :: list |> helper
+
+                Just ( _, Mkcol ) ->
+                    ( "MOVE", Move ) :: list |> helper
+
+                Just ( _, Move ) ->
+                    ( "NOTIFY", Notify ) :: list |> helper
+
+                Just ( _, Notify ) ->
+                    ( "OPTIONS", Options ) :: list |> helper
+
+                Just ( _, Options ) ->
+                    ( "PURGE", Purge ) :: list |> helper
+
+                Just ( _, Purge ) ->
+                    ( "REPORT", Report ) :: list |> helper
+
+                Just ( _, Report ) ->
+                    ( "SEARCH", Search ) :: list |> helper
+
+                Just ( _, Search ) ->
+                    ( "SUBSCRIBE", Subscribe ) :: list |> helper
+
+                Just ( _, Subscribe ) ->
+                    ( "TRACE", Trace ) :: list |> helper
+
+                Just ( _, Trace ) ->
+                    ( "UNLOCK", Unlock ) :: list |> helper
+
+                Just ( _, Unlock ) ->
+                    ( "UNSUBSCRIBE", Unsubscribe ) :: list |> helper
+
+                Just ( _, Unsubscribe ) ->
                     list
     in
     [] |> helper |> Dict.fromList
