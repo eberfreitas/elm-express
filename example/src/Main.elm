@@ -96,7 +96,7 @@ incoming _ request response =
                     ( response |> Response.map (Response.text (String.reverse text)), Nothing )
 
                 ( Request.Get, PortReverse text ) ->
-                    ( response, Just (requestReverse <| encodeToPortReverse (Request.id request) text) )
+                    ( Just response, Just (requestReverse <| encodeToPortReverse (Request.id request) text) )
 
                 ( Request.Get, Cookies ) ->
                     ( response |> Response.map (Response.json (request |> Request.cookies |> E.dict identity E.string))
@@ -155,7 +155,7 @@ incoming _ request response =
                                 , expect = Http.expectString GotTask
                                 }
                     in
-                    ( response, Just nextCmd )
+                    ( Just response, Just nextCmd )
 
                 ( Request.Get, Html ) ->
                     ( response |> Response.map (Response.html (htmlView Nothing)), Nothing )
@@ -167,7 +167,7 @@ incoming _ request response =
                     ( response |> Response.map (Response.status Response.NotFound >> Response.text "Not found"), Nothing )
 
         conn =
-            { request = request, response = nextResponse, model = model }
+            { request = request, response = nextResponse |> Maybe.withDefault response, model = model }
     in
     ( conn, cmd |> Maybe.withDefault (conn |> Conn.send |> responsePort) )
 
@@ -240,7 +240,7 @@ update _ msg conn =
                     (\reversed ->
                         let
                             nextConn =
-                                { conn | response = conn.response |> Response.map (Response.text reversed) }
+                                { conn | response = conn.response |> Response.map (Response.text reversed) |> Maybe.withDefault conn.response }
                         in
                         ( nextConn, nextConn |> Conn.send |> responsePort )
                     )
@@ -252,7 +252,7 @@ update _ msg conn =
                     (\txt ->
                         let
                             nextConn =
-                                { conn | response = conn.response |> Response.map (Response.text txt) }
+                                { conn | response = conn.response |> Response.map (Response.text txt) |> Maybe.withDefault conn.response }
                         in
                         ( nextConn, nextConn |> Conn.send |> responsePort )
                     )

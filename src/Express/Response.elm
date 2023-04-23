@@ -229,17 +229,19 @@ been locked. Using the `map` function you guarantee that any manipulation will o
 unlocked.
 
     newResponse =
-        oldResponse |> Express.Response.map (Express.Response.text "IT WORKS!")
+        oldResponse
+            |> Express.Response.map (Express.Response.text "IT WORKS!")
+            |> Maybe.withDefault oldResponse
 
 -}
-map : (Response -> Response) -> Response -> Response
+map : (Response -> a) -> Response -> Maybe a
 map mapFn response =
     case response of
         Unlocked _ ->
-            mapFn response
+            Just <| mapFn response
 
         Locked _ ->
-            response
+            Nothing
 
 
 internalMap : (InternalResponse -> InternalResponse) -> Response -> Response
