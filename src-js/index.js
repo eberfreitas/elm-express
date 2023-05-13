@@ -30,8 +30,7 @@ module.exports = function elmExpress({
 }) {
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
-      // TODO: docs here?
-      throw new Error(`Your Elm application needs to implement a port named "${port}".`);
+      throw new Error(`Your Elm application needs to implement a port named "${port}".\n\nCheck the docs here: https://bit.ly/3M23uin`);
     }
   });
 
@@ -40,6 +39,8 @@ module.exports = function elmExpress({
 
     Object.keys(POOL)
       .forEach((id) => {
+        if (!POOL[id]) return;
+
         const [time, _, res] = POOL[id];
 
         if ((time + timeout) > now) return;
@@ -65,9 +66,9 @@ module.exports = function elmExpress({
   });
 
   app.ports.responsePort.subscribe(({ requestId, response }) => {
-    const [_, req, res] = POOL[requestId] || [null, null, null];
+    if (!POOL[requestId]) return;
 
-    if (!req || !res) return;
+    const [_, req, res] = POOL[requestId];
 
     if (Object.keys(response.headers).length > 0) {
       res.set(response.headers);
@@ -106,7 +107,7 @@ module.exports = function elmExpress({
     }
   });
 
-  const elmExtension = {
+  return Object.assign(server, {
     start: (callback) => {
       server.all(`${mountingRoute}*`, bodyParser.text({type: "*/*"}), (req, res) => {
         const id = uuidv4();
@@ -140,7 +141,5 @@ module.exports = function elmExpress({
 
       return server.listen(port, callback);
     }
-  }
-
-  return Object.assign(server, elmExtension);
+  });
 }
