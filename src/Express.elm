@@ -1,6 +1,6 @@
 module Express exposing
     ( application
-    , AppInit, AppIncoming, AppUpdate, AppDecodeRequestId, ApplicationParams
+    , AppInit, AppIncoming, AppUpdate, AppDecodeRequestId, App
     , Pool, Model, Msg
     )
 
@@ -27,7 +27,7 @@ demonstration of how to wire everything up.
 
 # Types
 
-@docs AppInit, AppIncoming, AppUpdate, AppDecodeRequestId, ApplicationParams
+@docs AppInit, AppIncoming, AppUpdate, AppDecodeRequestId, App
 
 
 # Internal types
@@ -71,25 +71,21 @@ type Msg msg
 
 
 update :
-    (String -> Cmd (Msg msg))
-    -> List (Middleware.Middleware ctx msg)
-    -> AppDecodeRequestId msg
-    -> AppUpdate msg model ctx
-    -> AppIncoming ctx msg model
+    App flags ctx msg model
     -> Msg msg
     -> Model model ctx
     -> ( Model model ctx, Cmd (Msg msg) )
-update errorPort middlewares decodeRequestId appUpdate incoming msg model =
+update app msg model =
     case msg of
         GotRequest raw ->
             case D.decodeValue InternalRequest.decode raw of
                 Ok request ->
                     let
                         ( response, mwCmds ) =
-                            middlewares |> Middleware.run model.context request Response.new
+                            app.middlewares |> Middleware.run model.context request Response.new
 
                         ( conn, appCmds ) =
-                            incoming model.context request (response |> Response.setHeader "X-Powered-By" "elm-express")
+                            app.incoming model.context request (response |> Response.setHeader "X-Powered-By" "elm-express")
 
                         requestId : String
                         requestId =
@@ -102,7 +98,7 @@ update errorPort middlewares decodeRequestId appUpdate incoming msg model =
                     ( nextModel, Cmd.map (AppMsg requestId) (Cmd.batch [ mwCmds, appCmds ]) )
 
                 Err err ->
-                    ( model, errorPort <| "Error when decoding incoming request: " ++ D.errorToString err )
+                    ( model, app.errorPort <| "Error when decoding incoming request: " ++ D.errorToString err )
 
         GotPoolDrop uuid ->
             ( { model | pool = model.pool |> Dict.remove uuid }, Cmd.none )
@@ -110,32 +106,32 @@ update errorPort middlewares decodeRequestId appUpdate incoming msg model =
         AppMsg requestId appMsg ->
             model.pool
                 |> Dict.get requestId
-                |> Maybe.map (\conn -> appUpdate model.context appMsg conn)
+                |> Maybe.map (\conn -> app.update model.context appMsg conn)
                 |> Maybe.map
                     (\( conn, cmds ) ->
                         ( { model | pool = model.pool |> Dict.insert (Request.id conn.request) conn }
                         , cmds |> Cmd.map (AppMsg (Request.id conn.request))
                         )
                     )
-                |> Maybe.withDefault ( model, errorPort ("Request with id \"" ++ requestId ++ "\" not found in request pool") )
+                |> Maybe.withDefault ( model, app.errorPort ("Request with id \"" ++ requestId ++ "\" not found in request pool") )
 
         PortMsg appMsg ->
-            case decodeRequestId appMsg of
+            case app.decodeRequestId appMsg of
                 Ok requestId ->
                     model.pool
                         |> Dict.get requestId
-                        |> Maybe.map (\conn -> appUpdate model.context appMsg conn)
+                        |> Maybe.map (\conn -> app.update model.context appMsg conn)
                         |> Maybe.map
                             (\( conn, cmds ) ->
                                 ( { model | pool = model.pool |> Dict.insert (Request.id conn.request) conn }
                                 , cmds |> Cmd.map (AppMsg (Request.id conn.request))
                                 )
                             )
-                        |> Maybe.withDefault ( model, errorPort ("Request with id \"" ++ requestId ++ "\" not found in request pool") )
+                        |> Maybe.withDefault ( model, app.errorPort ("Request with id \"" ++ requestId ++ "\" not found in request pool") )
 
                 Err err ->
                     ( model
-                    , errorPort <| "Error when decoding the request id. Verify your `decodeRequestId` function: " ++ D.errorToString err
+                    , app.errorPort <| "Error when decoding the request id. Verify your `decodeRequestId` function: " ++ D.errorToString err
                     )
 
 
@@ -179,9 +175,9 @@ type alias AppDecodeRequestId msg =
     msg -> Result D.Error String
 
 
-{-| The `ApplicationParams` type alias represents all the parameters that need to be set up for your Elm application to
-work with elm-express. In addition to well-known functions like `init` and `update`, you need to provide four different
-ports that will be used for wiring:
+{-| The `App` type alias represents all the parameters that need to be set up for your Elm application to work with
+elm-express. In addition to well-known functions like `init` and `update`, you need to provide four different ports
+that will be used for wiring:
 
   - `requestPort`
   - `responsePort`
@@ -191,11 +187,11 @@ ports that will be used for wiring:
 You can also provide a list of middlewares to run at every request. Please refer to the `Express.Middleware`
 documentation to learn how to use middleware.
 
-For a full example of how to instantiate a new `ApplicationParams` value, see the
+For a full example of how to instantiate a new `App` value, see the
 [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository/source.
 
 -}
-type alias ApplicationParams flags ctx msg model =
+type alias App flags ctx msg model =
     { requestPort : (D.Value -> Msg msg) -> Sub.Sub (Msg msg)
     , responsePort : E.Value -> Cmd (Msg msg)
     , errorPort : String -> Cmd (Msg msg)
@@ -216,24 +212,19 @@ For a more in-depth understanding of how to use this library and create your own
 the [`/example`](https://github.com/eberfreitas/elm-express/tree/main/example) folder in the repository/source.
 
 -}
-application : ApplicationParams flags ctx msg model -> Program flags (Model model ctx) (Msg msg)
-application params =
+application : App flags ctx msg model -> Program flags (Model model ctx) (Msg msg)
+application app =
     let
         subs : Model model ctx -> Sub (Msg msg)
         subs _ =
             Sub.batch
-                [ params.requestPort GotRequest
-                , params.poolPort GotPoolDrop
-                , Sub.map PortMsg params.subscriptions
+                [ app.requestPort GotRequest
+                , app.poolPort GotPoolDrop
+                , Sub.map PortMsg app.subscriptions
                 ]
     in
     Platform.worker
-        { init = \flags -> ( Model Dict.empty (params.init flags), Cmd.none )
-        , update =
-            update params.errorPort
-                params.middlewares
-                params.decodeRequestId
-                params.update
-                params.incoming
+        { init = \flags -> ( Model Dict.empty (app.init flags), Cmd.none )
+        , update = update app
         , subscriptions = subs
         }
