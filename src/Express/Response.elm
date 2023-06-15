@@ -79,7 +79,7 @@ type Status
     | SwitchingProtocols
     | Processing
     | EarlyHints
-    | OK
+    | Ok
     | Created
     | Accepted
     | NonAuthoritativeInformation
@@ -191,7 +191,7 @@ bodyToMIMEType body =
             "text/html"
 
 
-{-| Creates a new, mostly empty, response. It will have a `OK` status and an empty text body. Once created you can
+{-| Creates a new, mostly empty, response. It will have a `Ok` status and an empty text body. Once created you can
 manipulate the contents of the response with other functions from this module.
 
     response =
@@ -201,7 +201,7 @@ manipulate the contents of the response with other functions from this module.
 new : Response
 new =
     Unlocked
-        { status = OK
+        { status = Ok
         , body = Text ""
         , cookieSet = []
         , cookieUnset = []
@@ -421,7 +421,7 @@ statusToCode status_ =
         EarlyHints ->
             103
 
-        OK ->
+        Ok ->
             200
 
         Created ->
