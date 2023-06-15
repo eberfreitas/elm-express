@@ -69,7 +69,9 @@ run context request response middlewares =
                 running :: toRun ->
                     let
                         ( newRes, newCmds ) =
-                            running ctx req res
+                            res
+                                |> Response.map (\_ -> running ctx req res)
+                                |> Maybe.withDefault ( res, Cmd.none )
                     in
                     recurse ctx req newRes (Cmd.batch [ cmds, newCmds ]) toRun
 
