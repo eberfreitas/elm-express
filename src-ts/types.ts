@@ -1,5 +1,6 @@
 import { CookieOptions, Request, Response } from "express";
 import { SessionOptions } from "express-session";
+import { IncomingHttpHeaders } from "http";
 
 export type ConnectionsPool = Record<string, [number, Request, Response]>;
 
@@ -11,7 +12,7 @@ interface ElmExpressCookie extends CookieOptions {
 }
 
 type ElmExpressResponse = {
-  requestId: number;
+  requestId: string;
   response: {
     status: number;
     body: {
@@ -21,7 +22,8 @@ type ElmExpressResponse = {
     headers: Record<string, string>;
     cookieSet: ElmExpressCookie[];
     cookieUnset: ElmExpressCookie[];
-    sessionSet: Record<string, any>;
+    sessionSet: Record<string, string>;
+    sessionUnset: string[];
     redirect: {
       code: number;
       path: string;
@@ -29,10 +31,21 @@ type ElmExpressResponse = {
   };
 };
 
+export type ElmExpressRequest = {
+  id: string;
+  now: number;
+  body: string;
+  method: string;
+  url: string;
+  headers: IncomingHttpHeaders;
+  cookies: Record<string, string>;
+  session: Record<string, string>;
+}
+
 interface Ports extends Object {
-  requestPort: { send: any };
-  poolPort: { send: any };
-  errorPort: { subscribe: (callback: (error: string) => void ) => void };
+  requestPort: { send: (request: ElmExpressRequest) => void };
+  poolPort: { send: (id: string) => void };
+  errorPort: { subscribe: (callback: (error: string) => void) => void };
   responsePort: { subscribe: (callback: (response: ElmExpressResponse) => void) => void };
 };
 

@@ -2,7 +2,7 @@ import XMLHttpRequest from "xhr2";
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import session from "express-session";
+import session, { Session, SessionData } from "express-session";
 import { v4 as uuidv4 } from "uuid";
 import { ConnectionsPool, ElmExpressParams } from "./types";
 
@@ -17,7 +17,7 @@ const REQUIRED_PORTS = [
   "errorPort" as const
 ];
 
-function buildSessionData(data: any) {
+function buildSessionData(data: Session & Partial<SessionData>): Record<string, string> {
   return Object.keys(data)
     .filter((k) => !["cookie"].includes(k))
     .reduce((acc, k) => {
@@ -119,7 +119,7 @@ module.exports = function elmExpress({
 
   return Object.assign(server, {
     start: (callback: () => void) => {
-      server.all(`${mountingRoute}*`, bodyParser.text({type: "*/*"}), (req, res) => {
+      server.all(`${mountingRoute}*`, bodyParser.text({ type: "*/*" }), (req, res) => {
         const id = uuidv4();
         const now = Date.now();
 
