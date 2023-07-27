@@ -1,7 +1,4 @@
 const { elmExpress } = require("../dist/index");
-
-console.log(elmExpress);
-
 const { Elm } = require("./build/main");
 
 const port = 3000;

@@ -5,11 +5,10 @@ import cookieParser from "cookie-parser";
 import session, { Session, SessionData } from "express-session";
 import { v4 as uuidv4 } from "uuid";
 
-import { ConnectionsPool, ElmExpressParams } from "./types";
+import * as pool from "./pool";
+import { ElmExpressParams } from "./types";
 
 global.XMLHttpRequest = XMLHttpRequest;
-
-const POOL: ConnectionsPool = {};
 
 const REQUIRED_PORTS = [
   "requestPort" as const,
@@ -48,19 +47,12 @@ export function elmExpress({
   setInterval(() => {
     const now = Date.now();
 
-    Object.keys(POOL)
-      .forEach((id: string) => {
-        if (!POOL[id]) return;
-
-        const [time, _, res] = POOL[id];
-
-        if ((time + timeout) > now) return;
-
-        res.status(500).type("text/plain").send("Timeout");
-        app.ports.poolPort.send(id);
-
-        delete POOL[id];
-      });
+    pool.tap((id, connection) => {
+      if (connection.now + timeout > now) return;
+      connection.res.status(500).type("text/plain").send("Timeout");
+      app.ports.poolPort.send(id);
+      pool.del(id);
+    });
   }, timeout);
 
   const server = express();
@@ -77,45 +69,42 @@ export function elmExpress({
   });
 
   app.ports.responsePort.subscribe(({ requestId, response }) => {
-    if (!POOL[requestId]) return;
+    pool.withConnection(requestId, (_id, { req, res }) => {
+      if (Object.keys(response.headers).length > 0) {
+        res.set(response.headers);
+      }
 
-    const [_, req, res] = POOL[requestId];
+      if (response.cookieSet.length > 0) {
+        response.cookieSet.forEach((cookieDef) => {
+          res.cookie(cookieDef.name, cookieDef.value, cookieDef);
+        });
+      }
 
-    if (Object.keys(response.headers).length > 0) {
-      res.set(response.headers);
-    }
+      if (response.cookieUnset.length > 0) {
+        response.cookieUnset.forEach((cookieDef) => {
+          res.clearCookie(cookieDef.name, cookieDef);
+        });
+      }
 
-    if (response.cookieSet.length > 0) {
-      response.cookieSet.forEach((cookieDef) => {
-        res.cookie(cookieDef.name, cookieDef.value, cookieDef);
-      });
-    }
+      if (Object.keys(response.sessionSet).length > 0) {
+        Object.keys(response.sessionSet).forEach((k) => {
+          req.session[k] = response.sessionSet[k];
+        });
+      }
 
-    if (response.cookieUnset.length > 0) {
-      response.cookieUnset.forEach((cookieDef) => {
-        res.clearCookie(cookieDef.name, cookieDef);
-      });
-    }
+      if (response.sessionUnset.length > 0) {
+        response.sessionUnset.forEach((k) => delete req.session[k]);
+      }
 
-    if (Object.keys(response.sessionSet).length > 0) {
-      Object.keys(response.sessionSet).forEach((k) => {
-        req.session[k] = response.sessionSet[k];
-      });
-    }
+      pool.del(requestId);
+      app.ports.poolPort.send(requestId);
 
-    if (response.sessionUnset.length > 0) {
-      response.sessionUnset.forEach((k) => delete req.session[k]);
-    }
-
-    delete POOL[requestId];
-
-    app.ports.poolPort.send(requestId);
-
-    if (response.redirect) {
-      res.redirect(response.redirect.code, response.redirect.path);
-    } else {
-      res.status(response.status).type(response.body.mime).send(response.body.body);
-    }
+      if (response.redirect) {
+        res.redirect(response.redirect.code, response.redirect.path);
+      } else {
+        res.status(response.status).type(response.body.mime).send(response.body.body);
+      }
+    });
   });
 
   return Object.assign(server, {
@@ -141,7 +130,7 @@ export function elmExpress({
           session: buildSessionData(req.session),
         };
 
-        POOL[id] = [now, req, res];
+        pool.put(id, req, res);
 
         if (requestCallback) {
           requestCallback(req, res);

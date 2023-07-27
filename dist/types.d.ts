@@ -2,7 +2,6 @@
 import { CookieOptions, Request, Response } from "express";
 import { SessionOptions } from "express-session";
 import { IncomingHttpHeaders } from "http";
-export type ConnectionsPool = Record<string, [number, Request, Response]>;
 export type SessionConfig = Omit<SessionOptions, "secret">;
 interface ElmExpressCookie extends CookieOptions {
     name: string;
