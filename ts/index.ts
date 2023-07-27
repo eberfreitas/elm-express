@@ -1,16 +1,24 @@
-const XMLHttpRequest = require('xhr2');
-const express = require("express");
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-const session = require("express-session");
-const { v4: uuidv4 } = require('uuid');
+import XMLHttpRequest from "xhr2";
+import express from "express";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import session, { Session, SessionData } from "express-session";
+import { v4 as uuidv4 } from "uuid";
+
+import { ConnectionsPool, ElmExpressParams } from "./types";
 
 global.XMLHttpRequest = XMLHttpRequest;
 
-const POOL = {};
-const REQUIRED_PORTS = ["requestPort", "responsePort", "poolPort", "errorPort"];
+const POOL: ConnectionsPool = {};
 
-function buildSessionData(data) {
+const REQUIRED_PORTS = [
+  "requestPort" as const,
+  "responsePort" as const,
+  "poolPort" as const,
+  "errorPort" as const
+];
+
+function buildSessionData(data: Session & Partial<SessionData>): Record<string, string> {
   return Object.keys(data)
     .filter((k) => !["cookie"].includes(k))
     .reduce((acc, k) => {
@@ -18,7 +26,7 @@ function buildSessionData(data) {
     }, {});
 }
 
-module.exports = function elmExpress({
+export function elmExpress({
   app,
   secret,
   sessionConfig,
@@ -27,10 +35,13 @@ module.exports = function elmExpress({
   timeout = 5000,
   port = 3000,
   mountingRoute = "/",
-}) {
+}: ElmExpressParams) {
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
-      throw new Error(`Your Elm application needs to implement a port named "${port}".\n\nCheck the docs here: https://bit.ly/3M23uin`);
+      throw new Error(
+        `Your Elm application needs to implement a port named "${port}".\
+        \n\nCheck the docs here: https://bit.ly/3M23uin`
+      );
     }
   });
 
@@ -38,7 +49,7 @@ module.exports = function elmExpress({
     const now = Date.now();
 
     Object.keys(POOL)
-      .forEach((id) => {
+      .forEach((id: string) => {
         if (!POOL[id]) return;
 
         const [time, _, res] = POOL[id];
@@ -57,7 +68,7 @@ module.exports = function elmExpress({
   server.use(cookieParser(secret));
   server.use(session({ ...sessionConfig, secret }));
 
-  app.ports.errorPort.subscribe((error) => {
+  app.ports.errorPort.subscribe((error: string) => {
     if (errorCallback) {
       errorCallback(error);
     } else {
@@ -81,7 +92,7 @@ module.exports = function elmExpress({
     }
 
     if (response.cookieUnset.length > 0) {
-      response.cookieUnset.forEach(cookieDef => {
+      response.cookieUnset.forEach((cookieDef) => {
         res.clearCookie(cookieDef.name, cookieDef);
       });
     }
@@ -108,8 +119,8 @@ module.exports = function elmExpress({
   });
 
   return Object.assign(server, {
-    start: (callback) => {
-      server.all(`${mountingRoute}*`, bodyParser.text({type: "*/*"}), (req, res) => {
+    start: (callback: () => void) => {
+      server.all(`${mountingRoute}*`, bodyParser.text({ type: "*/*" }), (req, res) => {
         const id = uuidv4();
         const now = Date.now();
 

@@ -1,4 +1,6 @@
-const elmExpress = require("../src-js/index");
+const { elmExpress } = require("../dist/index");
+
+console.log(elmExpress);
 
 const { Elm } = require("./build/main");
 
