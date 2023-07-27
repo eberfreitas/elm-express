@@ -35,6 +35,7 @@ const express_session_1 = __importDefault(require("express-session"));
 const uuid_1 = require("uuid");
 const pool = __importStar(require("./pool"));
 const session = __importStar(require("./session"));
+const cookie = __importStar(require("./cookie"));
 global.XMLHttpRequest = xhr2_1.default;
 const REQUIRED_PORTS = [
     "requestPort",
@@ -76,16 +77,8 @@ function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback
             if (Object.keys(response.headers).length > 0) {
                 res.set(response.headers);
             }
-            if (response.cookieSet.length > 0) {
-                response.cookieSet.forEach((cookieDef) => {
-                    res.cookie(cookieDef.name, cookieDef.value, cookieDef);
-                });
-            }
-            if (response.cookieUnset.length > 0) {
-                response.cookieUnset.forEach((cookieDef) => {
-                    res.clearCookie(cookieDef.name, cookieDef);
-                });
-            }
+            cookie.setCookies(res, response.cookieSet);
+            cookie.unsetCookies(res, response.cookieUnset);
             session.setSessionData(req, response.sessionSet);
             session.unsetSessionData(req, response.sessionUnset);
             pool.del(requestId);
@@ -117,10 +110,8 @@ function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback
                     cookies: Object.assign(Object.assign({}, req.cookies), req.signedCookies),
                     session: session.buildSessionData(req.session),
                 };
+                requestCallback && requestCallback(req, res);
                 pool.put(id, req, res);
-                if (requestCallback) {
-                    requestCallback(req, res);
-                }
                 app.ports.requestPort.send(request);
             });
             return server.listen(port, callback);

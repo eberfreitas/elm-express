@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import * as pool from "./pool";
 import * as session from "./session";
+import * as cookie from "./cookie";
 import { ElmExpressParams } from "./types";
 
 global.XMLHttpRequest = XMLHttpRequest;
@@ -67,18 +68,8 @@ export function elmExpress({
         res.set(response.headers);
       }
 
-      if (response.cookieSet.length > 0) {
-        response.cookieSet.forEach((cookieDef) => {
-          res.cookie(cookieDef.name, cookieDef.value, cookieDef);
-        });
-      }
-
-      if (response.cookieUnset.length > 0) {
-        response.cookieUnset.forEach((cookieDef) => {
-          res.clearCookie(cookieDef.name, cookieDef);
-        });
-      }
-
+      cookie.setCookies(res, response.cookieSet);
+      cookie.unsetCookies(res, response.cookieUnset);
       session.setSessionData(req, response.sessionSet);
       session.unsetSessionData(req, response.sessionUnset);
 
@@ -116,12 +107,9 @@ export function elmExpress({
           session: session.buildSessionData(req.session),
         };
 
+        requestCallback && requestCallback(req, res);
+
         pool.put(id, req, res);
-
-        if (requestCallback) {
-          requestCallback(req, res);
-        }
-
         app.ports.requestPort.send(request);
       });
 
