@@ -34,6 +34,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_session_1 = __importDefault(require("express-session"));
 const uuid_1 = require("uuid");
 const pool = __importStar(require("./pool"));
+const session = __importStar(require("./session"));
 global.XMLHttpRequest = xhr2_1.default;
 const REQUIRED_PORTS = [
     "requestPort",
@@ -41,13 +42,6 @@ const REQUIRED_PORTS = [
     "poolPort",
     "errorPort"
 ];
-function buildSessionData(data) {
-    return Object.keys(data)
-        .filter((k) => !["cookie"].includes(k))
-        .reduce((acc, k) => {
-        return Object.assign(Object.assign({}, acc), { [k]: data[k] });
-    }, {});
-}
 function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback, timeout = 5000, port = 3000, mountingRoute = "/", }) {
     REQUIRED_PORTS.forEach((port) => {
         var _a;
@@ -92,14 +86,8 @@ function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback
                     res.clearCookie(cookieDef.name, cookieDef);
                 });
             }
-            if (Object.keys(response.sessionSet).length > 0) {
-                Object.keys(response.sessionSet).forEach((k) => {
-                    req.session[k] = response.sessionSet[k];
-                });
-            }
-            if (response.sessionUnset.length > 0) {
-                response.sessionUnset.forEach((k) => delete req.session[k]);
-            }
+            session.setSessionData(req, response.sessionSet);
+            session.unsetSessionData(req, response.sessionUnset);
             pool.del(requestId);
             app.ports.poolPort.send(requestId);
             if (response.redirect) {
@@ -127,7 +115,7 @@ function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback
                     url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
                     headers: req.headers,
                     cookies: Object.assign(Object.assign({}, req.cookies), req.signedCookies),
-                    session: buildSessionData(req.session),
+                    session: session.buildSessionData(req.session),
                 };
                 pool.put(id, req, res);
                 if (requestCallback) {

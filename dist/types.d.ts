@@ -2,6 +2,7 @@
 import { CookieOptions, Request, Response } from "express";
 import { SessionOptions } from "express-session";
 import { IncomingHttpHeaders } from "http";
+import { ElmSessionData } from "./session";
 export type SessionConfig = Omit<SessionOptions, "secret">;
 interface ElmExpressCookie extends CookieOptions {
     name: string;
@@ -18,7 +19,7 @@ type ElmExpressResponse = {
         headers: Record<string, string>;
         cookieSet: ElmExpressCookie[];
         cookieUnset: ElmExpressCookie[];
-        sessionSet: Record<string, string>;
+        sessionSet: ElmSessionData;
         sessionUnset: string[];
         redirect: {
             code: number;

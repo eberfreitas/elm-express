@@ -2,10 +2,11 @@ import XMLHttpRequest from "xhr2";
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import session, { Session, SessionData } from "express-session";
+import expressSession from "express-session";
 import { v4 as uuidv4 } from "uuid";
 
 import * as pool from "./pool";
+import * as session from "./session";
 import { ElmExpressParams } from "./types";
 
 global.XMLHttpRequest = XMLHttpRequest;
@@ -16,14 +17,6 @@ const REQUIRED_PORTS = [
   "poolPort" as const,
   "errorPort" as const
 ];
-
-function buildSessionData(data: Session & Partial<SessionData>): Record<string, string> {
-  return Object.keys(data)
-    .filter((k) => !["cookie"].includes(k))
-    .reduce((acc, k) => {
-      return { ...acc, [k]: data[k] }
-    }, {});
-}
 
 export function elmExpress({
   app,
@@ -58,7 +51,7 @@ export function elmExpress({
   const server = express();
 
   server.use(cookieParser(secret));
-  server.use(session({ ...sessionConfig, secret }));
+  server.use(expressSession({ ...sessionConfig, secret }));
 
   app.ports.errorPort.subscribe((error: string) => {
     if (errorCallback) {
@@ -86,15 +79,8 @@ export function elmExpress({
         });
       }
 
-      if (Object.keys(response.sessionSet).length > 0) {
-        Object.keys(response.sessionSet).forEach((k) => {
-          req.session[k] = response.sessionSet[k];
-        });
-      }
-
-      if (response.sessionUnset.length > 0) {
-        response.sessionUnset.forEach((k) => delete req.session[k]);
-      }
+      session.setSessionData(req, response.sessionSet);
+      session.unsetSessionData(req, response.sessionUnset);
 
       pool.del(requestId);
       app.ports.poolPort.send(requestId);
@@ -127,7 +113,7 @@ export function elmExpress({
           url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
           headers: req.headers,
           cookies: { ...req.cookies, ...req.signedCookies },
-          session: buildSessionData(req.session),
+          session: session.buildSessionData(req.session),
         };
 
         pool.put(id, req, res);
