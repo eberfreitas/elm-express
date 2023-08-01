@@ -2,9 +2,9 @@
   "name": "elm-express",
   "version": "2.0.0",
   "description": "JavaScript bridge to enable the usage of Elm in the backend through Express",
-  "main": "src-js/index.js",
+  "main": "dist/index.js",
   "files": [
-    "/src-js"
+    "/dist"
   ],
   "author": "Éber Freitas Dias <eber.freitas@gmail.com>",
   "license": "MIT",
@@ -17,6 +17,11 @@
     "xhr2": "^0.2.1"
   },
   "devDependencies": {
-    "elm-review": "^2.10.0"
+    "@types/cookie-parser": "^1.4.3",
+    "@types/express": "^4.17.17",
+    "@types/express-session": "^1.17.7",
+    "@types/uuid": "^9.0.2",
+    "elm-review": "^2.10.0",
+    "typescript": "^5.1.6"
   }
 }

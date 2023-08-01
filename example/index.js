@@ -1,5 +1,4 @@
-const elmExpress = require("../src-js/index");
-
+const { elmExpress } = require("../dist/index");
 const { Elm } = require("./build/main");
 
 const port = 3000;
