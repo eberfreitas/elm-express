@@ -10,7 +10,8 @@
   "license": "MIT",
   "scripts": {
     "dist": "tsc --outDir dist --declaration",
-    "lint": "eslint ./ts"
+    "lint": "eslint ./ts",
+    "format": "prettier . --write"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
