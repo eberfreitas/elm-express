@@ -86,19 +86,19 @@ incoming _ request response =
         ( nextResponse, cmd ) =
             case ( requestMethod, model ) of
                 ( Request.Post, Home ) ->
-                    ( response |> Response.map (Response.html (htmlView (Request.body request |> Just))), Nothing )
+                    ( response |> Response.withUnlocked (Response.html (htmlView (Request.body request |> Just))), Nothing )
 
                 ( Request.Get, Home ) ->
-                    ( response |> Response.map (Response.html (htmlView Nothing)), Nothing )
+                    ( response |> Response.withUnlocked (Response.html (htmlView Nothing)), Nothing )
 
                 ( Request.Get, Reverse text ) ->
-                    ( response |> Response.map (Response.text (String.reverse text)), Nothing )
+                    ( response |> Response.withUnlocked (Response.text (String.reverse text)), Nothing )
 
                 ( Request.Get, PortReverse text ) ->
                     ( Just response, Just (requestReverse <| encodeToPortReverse (Request.id request) text) )
 
                 ( Request.Get, Cookies ) ->
-                    ( response |> Response.map (Response.json (request |> Request.cookies |> E.dict identity E.string))
+                    ( response |> Response.withUnlocked (Response.json (request |> Request.cookies |> E.dict identity E.string))
                     , Nothing
                     )
 
@@ -106,7 +106,7 @@ incoming _ request response =
                     let
                         res =
                             response
-                                |> Response.map
+                                |> Response.withUnlocked
                                     (Response.setCookie (Cookie.new request name value Nothing)
                                         >> Response.text ("Cookie - " ++ name ++ ": " ++ value)
                                     )
@@ -117,7 +117,7 @@ incoming _ request response =
                     let
                         res =
                             response
-                                |> Response.map
+                                |> Response.withUnlocked
                                     (\_ ->
                                         request
                                             |> Request.cookie name
@@ -129,22 +129,22 @@ incoming _ request response =
                     ( res, Nothing )
 
                 ( Request.Get, Session key ) ->
-                    ( response |> Response.map (Response.text (request |> Request.session key |> Maybe.withDefault "Session key not found."))
+                    ( response |> Response.withUnlocked (Response.text (request |> Request.session key |> Maybe.withDefault "Session key not found."))
                     , Nothing
                     )
 
                 ( Request.Get, SetSession key value ) ->
-                    ( response |> Response.map (Response.setSession key value >> Response.text ("Session - " ++ key ++ ": " ++ value))
+                    ( response |> Response.withUnlocked (Response.setSession key value >> Response.text ("Session - " ++ key ++ ": " ++ value))
                     , Nothing
                     )
 
                 ( Request.Get, UnsetSession key ) ->
-                    ( response |> Response.map (Response.unsetSession key >> Response.text ("Session - " ++ key))
+                    ( response |> Response.withUnlocked (Response.unsetSession key >> Response.text ("Session - " ++ key))
                     , Nothing
                     )
 
                 ( Request.Get, Redirect ) ->
-                    ( response |> Response.map (Response.redirect "/"), Nothing )
+                    ( response |> Response.withUnlocked (Response.redirect "/"), Nothing )
 
                 ( Request.Get, Task ) ->
                     let
@@ -157,7 +157,7 @@ incoming _ request response =
                     ( Just response, Just nextCmd )
 
                 _ ->
-                    ( response |> Response.map (Response.status Response.NotFound >> Response.text "Not found"), Nothing )
+                    ( response |> Response.withUnlocked (Response.status Response.NotFound >> Response.text "Not found"), Nothing )
 
         conn =
             { request = request, response = nextResponse |> Maybe.withDefault response, model = model }
@@ -239,7 +239,7 @@ update _ msg conn =
                     (\reversed ->
                         let
                             nextConn =
-                                { conn | response = conn.response |> Response.map (Response.text reversed) |> Maybe.withDefault conn.response }
+                                { conn | response = conn.response |> Response.withUnlocked (Response.text reversed) |> Maybe.withDefault conn.response }
                         in
                         ( nextConn, nextConn |> Conn.send |> responsePort )
                     )
@@ -251,7 +251,7 @@ update _ msg conn =
                     (\txt ->
                         let
                             nextConn =
-                                { conn | response = conn.response |> Response.map (Response.text txt) |> Maybe.withDefault conn.response }
+                                { conn | response = conn.response |> Response.withUnlocked (Response.text txt) |> Maybe.withDefault conn.response }
                         in
                         ( nextConn, nextConn |> Conn.send |> responsePort )
                     )

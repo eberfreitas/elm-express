@@ -5,7 +5,7 @@ module Express.Response exposing
     , redirect, rawRedirect
     , setCookie, unsetCookie
     , setSession, unsetSession
-    , lock, map
+    , lock, withUnlocked
     , send
     )
 
@@ -47,7 +47,7 @@ safety to the response definition.
 
 # Manipulating responses
 
-@docs lock, map
+@docs lock, withUnlocked
 
 
 # Helpers
@@ -222,20 +222,20 @@ extractInternalResponse response =
             res
 
 
-{-| When manipulating responses it is advised to wrap those manipulations inside the `map` function.
+{-| When manipulating responses it is advised to wrap those manipulations inside the `withUnlocked` function.
 
 Imagine that you have something expensive to run during a request, but the existing response you are manipulating has
-been locked. Using the `map` function you guarantee that any manipulation will only be called if the response is
-unlocked.
+been locked. Using the `withUnlocked` function you guarantee that any manipulation will only be called if the response
+is unlocked.
 
     newResponse =
         oldResponse
-            |> Express.Response.map (Express.Response.text "IT WORKS!")
+            |> Express.Response.withUnlocked (Express.Response.text "IT WORKS!")
             |> Maybe.withDefault oldResponse
 
 -}
-map : (Response -> a) -> Response -> Maybe a
-map mapFn response =
+withUnlocked : (Response -> a) -> Response -> Maybe a
+withUnlocked mapFn response =
     case response of
         Unlocked _ ->
             Just <| mapFn response
@@ -244,8 +244,8 @@ map mapFn response =
             Nothing
 
 
-internalMap : (InternalResponse -> InternalResponse) -> Response -> Response
-internalMap fn response =
+map : (InternalResponse -> InternalResponse) -> Response -> Response
+map fn response =
     case response of
         Unlocked res ->
             Unlocked <| fn res
@@ -278,7 +278,7 @@ lock response =
 -}
 status : Status -> Response -> Response
 status status_ response =
-    response |> internalMap (\res -> { res | status = status_ })
+    response |> map (\res -> { res | status = status_ })
 
 
 {-| Sets a plain text response.
@@ -289,7 +289,7 @@ status status_ response =
 -}
 text : String -> Response -> Response
 text text_ response =
-    response |> internalMap (\res -> { res | body = Text text_ })
+    response |> map (\res -> { res | body = Text text_ })
 
 
 {-| Sets a JSON response.
@@ -300,7 +300,7 @@ text text_ response =
 -}
 json : E.Value -> Response -> Response
 json val response =
-    response |> internalMap (\res -> { res | body = Json val })
+    response |> map (\res -> { res | body = Json val })
 
 
 {-| Sets a HTML response. The HTML should be represented as a string but you can use packages like
@@ -317,7 +317,7 @@ repository/source.
 -}
 html : String -> Response -> Response
 html html_ response =
-    response |> internalMap (\res -> { res | body = Html html_ })
+    response |> map (\res -> { res | body = Html html_ })
 
 
 {-| Sets a header in the response.
@@ -331,7 +331,7 @@ html html_ response =
 -}
 setHeader : String -> String -> Response -> Response
 setHeader name value response =
-    response |> internalMap (\res -> { res | headers = Dict.insert name value res.headers })
+    response |> map (\res -> { res | headers = Dict.insert name value res.headers })
 
 
 {-| Sets a cookie with the response. To learn how to create a new cookie visit the docs for `Express.Cookie` module.
@@ -342,7 +342,7 @@ setHeader name value response =
 -}
 setCookie : Cookie.Cookie -> Response -> Response
 setCookie cookie response =
-    response |> internalMap (\res -> { res | cookieSet = cookie :: res.cookieSet })
+    response |> map (\res -> { res | cookieSet = cookie :: res.cookieSet })
 
 
 {-| Deletes a cookie. In order to delete a cookie you must recreate it with the same properties as the original cookie
@@ -354,7 +354,7 @@ excluding `maxAge`.
 -}
 unsetCookie : Cookie.Cookie -> Response -> Response
 unsetCookie cookie response =
-    response |> internalMap (\res -> { res | cookieUnset = cookie :: res.cookieUnset })
+    response |> map (\res -> { res | cookieUnset = cookie :: res.cookieUnset })
 
 
 {-| Sets a new session data.
@@ -365,7 +365,7 @@ unsetCookie cookie response =
 -}
 setSession : String -> String -> Response -> Response
 setSession key value response =
-    response |> internalMap (\res -> { res | sessionSet = Dict.insert key value res.sessionSet })
+    response |> map (\res -> { res | sessionSet = Dict.insert key value res.sessionSet })
 
 
 {-| Deletes a session data.
@@ -376,7 +376,7 @@ setSession key value response =
 -}
 unsetSession : String -> Response -> Response
 unsetSession key response =
-    response |> internalMap (\res -> { res | sessionUnset = key :: res.sessionUnset })
+    response |> map (\res -> { res | sessionUnset = key :: res.sessionUnset })
 
 
 {-| Makes the response redirect to another URL/path. This will make a simple `Found` (302) redirect. To use other
@@ -390,7 +390,7 @@ _Attention_: this function **locks** the response.
 -}
 redirect : String -> Response -> Response
 redirect path response =
-    response |> internalMap (\res -> { res | redirect = Just (Found path) }) |> lock
+    response |> map (\res -> { res | redirect = Just (Found path) }) |> lock
 
 
 {-| Makes the response directs to another URL/path using the specified `Redirect` type you wanna use.
@@ -403,7 +403,7 @@ _Attention_: this function **locks** the response.
 -}
 rawRedirect : Redirect -> Response -> Response
 rawRedirect redirect_ response =
-    response |> internalMap (\res -> { res | redirect = Just redirect_ }) |> lock
+    response |> map (\res -> { res | redirect = Just redirect_ }) |> lock
 
 
 statusToCode : Status -> Int
