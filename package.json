@@ -8,6 +8,10 @@
   ],
   "author": "Éber Freitas Dias <eber.freitas@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "dist": "tsc --outDir dist --declaration",
+    "lint": "eslint ./ts"
+  },
   "dependencies": {
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
@@ -21,7 +25,10 @@
     "@types/express": "^4.17.17",
     "@types/express-session": "^1.17.7",
     "@types/uuid": "^9.0.2",
+    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "@typescript-eslint/parser": "^6.2.1",
     "elm-review": "^2.10.0",
+    "eslint": "^8.46.0",
     "typescript": "^5.1.6"
   }
 }
