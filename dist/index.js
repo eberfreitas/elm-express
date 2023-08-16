@@ -41,7 +41,7 @@ const REQUIRED_PORTS = [
     "requestPort",
     "responsePort",
     "poolPort",
-    "errorPort"
+    "errorPort",
 ];
 function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback, timeout = 5000, port = 3000, mountingRoute = "/", }) {
     REQUIRED_PORTS.forEach((port) => {
@@ -87,7 +87,10 @@ function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback
                 res.redirect(response.redirect.code, response.redirect.path);
             }
             else {
-                res.status(response.status).type(response.body.mime).send(response.body.body);
+                res
+                    .status(response.status)
+                    .type(response.body.mime)
+                    .send(response.body.body);
             }
         });
     });
@@ -115,7 +118,7 @@ function elmExpress({ app, secret, sessionConfig, requestCallback, errorCallback
                 app.ports.requestPort.send(request);
             });
             return server.listen(port, callback);
-        }
+        },
     });
 }
 exports.elmExpress = elmExpress;

@@ -10,7 +10,7 @@ function buildSessionData(data) {
 }
 exports.buildSessionData = buildSessionData;
 function setSessionData(req, data) {
-    Object.keys(data).forEach((k) => req.session[k] = data[k]);
+    Object.keys(data).forEach((k) => (req.session[k] = data[k]));
 }
 exports.setSessionData = setSessionData;
 function unsetSessionData(req, keys) {
