@@ -37,7 +37,7 @@ export type ElmExpressRequest = {
     cookies: Record<string, string>;
     session: Record<string, string>;
 };
-interface Ports extends Object {
+interface Ports extends NonNullable<unknown> {
     requestPort: {
         send: (request: ElmExpressRequest) => void;
     };

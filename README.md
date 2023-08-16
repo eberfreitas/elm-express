@@ -29,7 +29,7 @@ Next, create your entry point (`index.js` or `server.js`) by requiring the elm-e
 Elm application using `Elm.Main.init()`:
 
 ```js
-const elmExpress = require("elm-express");
+const { elmExpress } = require("elm-express");
 const { Elm } = require("./main");
 
 const port = 3000;

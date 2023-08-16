@@ -42,12 +42,12 @@ export type ElmExpressRequest = {
   session: Record<string, string>;
 }
 
-interface Ports extends Object {
+interface Ports extends NonNullable<unknown> {
   requestPort: { send: (request: ElmExpressRequest) => void };
   poolPort: { send: (id: string) => void };
   errorPort: { subscribe: (callback: (error: string) => void) => void };
   responsePort: { subscribe: (callback: (response: ElmExpressResponse) => void) => void };
-};
+}
 
 export type ElmExpressApp = {
   ports: Ports;
