@@ -1,7 +1,7 @@
-import { } from "express-session";
+import {} from "express-session";
 
 declare module "express-session" {
-    interface SessionData {
-        [key: string]: Cookie | string;
-    }
+  interface SessionData {
+    [key: string]: Cookie | string;
+  }
 }

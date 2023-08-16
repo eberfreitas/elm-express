@@ -16,7 +16,7 @@ const REQUIRED_PORTS = [
   "requestPort" as const,
   "responsePort" as const,
   "poolPort" as const,
-  "errorPort" as const
+  "errorPort" as const,
 ];
 
 export function elmExpress({
@@ -33,7 +33,7 @@ export function elmExpress({
     if (!app.ports?.[port]) {
       throw new Error(
         `Your Elm application needs to implement a port named "${port}".\
-        \n\nCheck the docs here: https://bit.ly/3M23uin`
+        \n\nCheck the docs here: https://bit.ly/3M23uin`,
       );
     }
   });
@@ -79,41 +79,48 @@ export function elmExpress({
       if (response.redirect) {
         res.redirect(response.redirect.code, response.redirect.path);
       } else {
-        res.status(response.status).type(response.body.mime).send(response.body.body);
+        res
+          .status(response.status)
+          .type(response.body.mime)
+          .send(response.body.body);
       }
     });
   });
 
   return Object.assign(server, {
     start: (callback: () => void) => {
-      server.all(`${mountingRoute}*`, bodyParser.text({ type: "*/*" }), (req, res) => {
-        const id = uuidv4();
-        const now = Date.now();
+      server.all(
+        `${mountingRoute}*`,
+        bodyParser.text({ type: "*/*" }),
+        (req, res) => {
+          const id = uuidv4();
+          const now = Date.now();
 
-        let body = req.body || "";
+          let body = req.body || "";
 
-        if (Object.keys(body).length === 0) {
-          body = "";
-        }
+          if (Object.keys(body).length === 0) {
+            body = "";
+          }
 
-        const request = {
-          id,
-          now,
-          body,
-          method: req.method,
-          url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
-          headers: req.headers,
-          cookies: { ...req.cookies, ...req.signedCookies },
-          session: session.buildSessionData(req.session),
-        };
+          const request = {
+            id,
+            now,
+            body,
+            method: req.method,
+            url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
+            headers: req.headers,
+            cookies: { ...req.cookies, ...req.signedCookies },
+            session: session.buildSessionData(req.session),
+          };
 
-        requestCallback && requestCallback(req, res);
+          requestCallback && requestCallback(req, res);
 
-        pool.put(id, req, res);
-        app.ports.requestPort.send(request);
-      });
+          pool.put(id, req, res);
+          app.ports.requestPort.send(request);
+        },
+      );
 
       return server.listen(port, callback);
-    }
+    },
   });
 }

@@ -27,7 +27,7 @@ type ElmExpressResponse = {
     redirect: {
       code: number;
       path: string;
-    }
+    };
   };
 };
 
@@ -40,13 +40,15 @@ export type ElmExpressRequest = {
   headers: IncomingHttpHeaders;
   cookies: Record<string, string>;
   session: Record<string, string>;
-}
+};
 
 interface Ports extends NonNullable<unknown> {
   requestPort: { send: (request: ElmExpressRequest) => void };
   poolPort: { send: (id: string) => void };
   errorPort: { subscribe: (callback: (error: string) => void) => void };
-  responsePort: { subscribe: (callback: (response: ElmExpressResponse) => void) => void };
+  responsePort: {
+    subscribe: (callback: (response: ElmExpressResponse) => void) => void;
+  };
 }
 
 export type ElmExpressApp = {

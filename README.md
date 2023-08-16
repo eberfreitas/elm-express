@@ -1,4 +1,5 @@
 ![elm-express](https://raw.githubusercontent.com/eberfreitas/elm-express/main/elm-express.png)
+
 # elm-express
 
 elm-express is a library that enables the use of Elm in the backend with Express. It is designed to provide minimal
@@ -41,7 +42,13 @@ const sessionConfig = {
   saveUninitialized: true,
 };
 
-const server = elmExpress({ app, secret, port, sessionConfig, requestCallback });
+const server = elmExpress({
+  app,
+  secret,
+  port,
+  sessionConfig,
+  requestCallback,
+});
 
 server.start(() => {
   console.log(`Example app listening on port ${port}`);
