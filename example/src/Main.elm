@@ -7,8 +7,6 @@ import Express.Request as Request
 import Express.Response as Response
 import Html.String as Html
 import Html.String.Attributes as Attrs
-import Html.String.Extra as HtmlX
-import Html.String.Extra.Document as Document
 import Http
 import Json.Decode as D
 import Json.Encode as E
@@ -36,7 +34,7 @@ port gotReverse : (E.Value -> msg) -> Sub.Sub msg
 
 type Model
     = NotFound
-    | HelloWorld
+    | Home
     | Reverse String
     | PortReverse String
     | Cookies
@@ -47,7 +45,6 @@ type Model
     | UnsetSession String
     | Redirect
     | Task
-    | Html
 
 
 type Msg
@@ -58,7 +55,7 @@ type Msg
 route : Parser.Parser (Model -> a) a
 route =
     Parser.oneOf
-        [ Parser.map HelloWorld Parser.top
+        [ Parser.map Home Parser.top
         , Parser.map Reverse (Parser.s "reverse" </> Parser.string)
         , Parser.map PortReverse (Parser.s "port-reverse" </> Parser.string)
         , Parser.map Cookies (Parser.s "cookies")
@@ -69,7 +66,6 @@ route =
         , Parser.map UnsetSession (Parser.s "session" </> Parser.s "unset" </> Parser.string)
         , Parser.map Redirect (Parser.s "redirect")
         , Parser.map Task (Parser.s "task")
-        , Parser.map Html (Parser.s "html")
         ]
 
 
@@ -89,8 +85,11 @@ incoming _ request response =
 
         ( nextResponse, cmd ) =
             case ( requestMethod, model ) of
-                ( Request.Get, HelloWorld ) ->
-                    ( response |> Response.map (Response.text "Hello world!"), Nothing )
+                ( Request.Post, Home ) ->
+                    ( response |> Response.map (Response.html (htmlView (Request.body request |> Just))), Nothing )
+
+                ( Request.Get, Home ) ->
+                    ( response |> Response.map (Response.html (htmlView Nothing)), Nothing )
 
                 ( Request.Get, Reverse text ) ->
                     ( response |> Response.map (Response.text (String.reverse text)), Nothing )
@@ -157,12 +156,6 @@ incoming _ request response =
                     in
                     ( Just response, Just nextCmd )
 
-                ( Request.Get, Html ) ->
-                    ( response |> Response.map (Response.html (htmlView Nothing)), Nothing )
-
-                ( Request.Post, Html ) ->
-                    ( response |> Response.map (Response.html (htmlView (Request.body request |> Just))), Nothing )
-
                 _ ->
                     ( response |> Response.map (Response.status Response.NotFound >> Response.text "Not found"), Nothing )
 
@@ -172,57 +165,63 @@ incoming _ request response =
     ( conn, cmd |> Maybe.withDefault (conn |> Conn.send |> responsePort) )
 
 
+htmlTemplate : String -> String
+htmlTemplate body =
+    String.replace "{{BODY}}"
+        body
+        """
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>elm-express</title>
+        <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css" />
+    </head>
+    <body>
+        {{BODY}}
+    </body>
+</html>
+        """
+
+
 htmlView : Maybe String -> String
 htmlView postData =
-    Document.new [ Attrs.lang "en" ]
-        (HtmlX.head []
-            [ HtmlX.title [] "elm-express"
-            , HtmlX.link
-                [ Attrs.rel "stylesheet"
-                , Attrs.href "https://unpkg.com/sakura.css/css/sakura.css"
-                , Attrs.type_ "text/css"
+    Html.div []
+        [ Html.h1 [] [ Html.text "Hello from elm-express!" ]
+        , Html.p []
+            [ Html.text
+                """
+                This page is being rendered with server-side Elm, which means that the HTML you're seeing is
+                being generated entirely on the server using Elm code. By using Elm on the server, we're able
+                to leverage the same powerful language and tooling that we use on the client, making it easier
+                to build complex and robust web applications.
+                """
+            ]
+        , Html.form [ Attrs.method "post", Attrs.action "" ]
+            [ Html.fieldset []
+                [ Html.legend [] [ Html.text "Sample form" ]
+                , Html.div []
+                    [ Html.label [ Attrs.for "name" ] [ Html.text "Your name" ]
+                    , Html.input [ Attrs.id "name", Attrs.name "name", Attrs.style "width" "100%" ] []
+                    ]
+                , Html.div []
+                    [ Html.label [ Attrs.for "email" ] [ Html.text "Your e-mail" ]
+                    , Html.input [ Attrs.id "email", Attrs.name "email", Attrs.style "width" "100%" ] []
+                    ]
+                , Html.div [] [ Html.button [ Attrs.type_ "submit" ] [ Html.text "Submit" ] ]
                 ]
             ]
-        )
-        (HtmlX.body []
-            [ Html.div []
-                [ Html.h1 [] [ Html.text "Hello from elm-express!" ]
-                , Html.p []
-                    [ Html.text
-                        """
-                        This page is being rendered with server-side Elm, which means that the HTML you're seeing is
-                        being generated entirely on the server using Elm code. By using Elm on the server, we're able
-                        to leverage the same powerful language and tooling that we use on the client, making it easier
-                        to build complex and robust web applications.
-                        """
+        , case postData of
+            Just data ->
+                Html.div []
+                    [ Html.hr [] []
+                    , Html.pre [] [ Html.text data ]
                     ]
-                , Html.form [ Attrs.method "post", Attrs.action "" ]
-                    [ Html.fieldset []
-                        [ Html.legend [] [ Html.text "Sample form" ]
-                        , Html.div []
-                            [ Html.label [ Attrs.for "name" ] [ Html.text "Your name" ]
-                            , Html.input [ Attrs.id "name", Attrs.name "name", Attrs.style "width" "100%" ] []
-                            ]
-                        , Html.div []
-                            [ Html.label [ Attrs.for "email" ] [ Html.text "Your e-mail" ]
-                            , Html.input [ Attrs.id "email", Attrs.name "email", Attrs.style "width" "100%" ] []
-                            ]
-                        , Html.div [] [ Html.button [ Attrs.type_ "submit" ] [ Html.text "Submit" ] ]
-                        ]
-                    ]
-                , case postData of
-                    Just data ->
-                        Html.div []
-                            [ Html.hr [] []
-                            , Html.pre [] [ Html.text data ]
-                            ]
 
-                    Nothing ->
-                        Html.text ""
-                ]
-            ]
-        )
-        |> Document.toString
+            Nothing ->
+                Html.text ""
+        ]
+        |> Html.toString 0
+        |> htmlTemplate
 
 
 subscriptions : Sub Msg
