@@ -29,6 +29,8 @@
     "@typescript-eslint/parser": "^6.2.1",
     "elm-review": "^2.10.0",
     "eslint": "^8.46.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "3.0.2",
     "typescript": "^5.1.6"
   }
 }
