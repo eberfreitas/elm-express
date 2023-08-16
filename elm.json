@@ -10,10 +10,7 @@
         "Express.Cookie",
         "Express.Middleware",
         "Express.Request",
-        "Express.Response",
-        "Html.String.Extra",
-        "Html.String.Extra.Attributes",
-        "Html.String.Extra.Document"
+        "Express.Response"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
