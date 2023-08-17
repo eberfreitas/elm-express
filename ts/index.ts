@@ -1,14 +1,69 @@
 import XMLHttpRequest from "xhr2";
-import express from "express";
+import express, { Request as ERequest, Response as EResponse } from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import expressSession from "express-session";
 import { v4 as uuidv4 } from "uuid";
+import { IncomingHttpHeaders } from "http";
 
 import * as pool from "./pool";
 import * as session from "./session";
 import * as cookie from "./cookie";
-import { ElmExpressParams } from "./types";
+
+export type Request = {
+  id: string;
+  now: number;
+  body: string;
+  method: string;
+  url: string;
+  headers: IncomingHttpHeaders;
+  cookies: Record<string, string>;
+  session: Record<string, string>;
+};
+
+export type Response = {
+  requestId: string;
+  response: {
+    status: number;
+    body: {
+      mime: string;
+      body: string;
+    };
+    headers: Record<string, string>;
+    cookieSet: cookie.Cookie[];
+    cookieUnset: cookie.Cookie[];
+    sessionSet: session.SessionData;
+    sessionUnset: string[];
+    redirect: {
+      code: number;
+      path: string;
+    };
+  };
+};
+
+export interface Ports extends NonNullable<unknown> {
+  requestPort: { send: (request: Request) => void };
+  poolPort: { send: (id: string) => void };
+  errorPort: { subscribe: (callback: (error: string) => void) => void };
+  responsePort: {
+    subscribe: (callback: (response: Response) => void) => void;
+  };
+}
+
+export type App = {
+  ports: Ports;
+};
+
+export type InitParams = {
+  app: App;
+  secret: string;
+  sessionConfig: session.SessionConfig;
+  timeout: number;
+  port: number;
+  mountingRoute: string;
+  requestCallback?: (req: ERequest, res: EResponse) => void;
+  errorCallback?: (error: string) => void;
+};
 
 global.XMLHttpRequest = XMLHttpRequest;
 
@@ -28,7 +83,7 @@ export function elmExpress({
   timeout = 5000,
   port = 3000,
   mountingRoute = "/",
-}: ElmExpressParams) {
+}: InitParams) {
   REQUIRED_PORTS.forEach((port) => {
     if (!app.ports?.[port]) {
       throw new Error(

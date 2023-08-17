@@ -1,11 +1,13 @@
-import { Session, SessionData } from "express-session";
+import { Session, SessionData as ESessionData, SessionOptions } from "express-session";
 import { Request } from "express";
 
-export type ElmSessionData = Record<string, string>;
+export type SessionConfig = Omit<SessionOptions, "secret">;
+
+export type SessionData = Record<string, string>;
 
 export function buildSessionData(
-  data: Session & Partial<SessionData>,
-): ElmSessionData {
+  data: Session & Partial<ESessionData>,
+): SessionData {
   return Object.keys(data)
     .filter((k) => !["cookie"].includes(k))
     .reduce((acc, k) => {
@@ -13,7 +15,7 @@ export function buildSessionData(
     }, {});
 }
 
-export function setSessionData(req: Request, data: ElmSessionData): void {
+export function setSessionData(req: Request, data: SessionData): void {
   Object.keys(data).forEach((k) => (req.session[k] = data[k]));
 }
 

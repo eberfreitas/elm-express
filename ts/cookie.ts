@@ -1,13 +1,16 @@
-import { Response } from "express";
+import { CookieOptions, Response } from "express";
 
-import { ElmExpressCookie } from "./types";
+export interface Cookie extends CookieOptions {
+  name: string;
+  value: string;
+}
 
-export function setCookies(res: Response, cookies: ElmExpressCookie[]): void {
+export function setCookies(res: Response, cookies: Cookie[]): void {
   cookies.forEach((cookieDef) =>
     res.cookie(cookieDef.name, cookieDef.value, cookieDef),
   );
 }
 
-export function unsetCookies(res: Response, cookies: ElmExpressCookie[]): void {
+export function unsetCookies(res: Response, cookies: Cookie[]): void {
   cookies.forEach((cookieDef) => res.clearCookie(cookieDef.name, cookieDef));
 }
