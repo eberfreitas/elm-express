@@ -1,6 +1,6 @@
 {
   "name": "elm-express",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "JavaScript bridge to enable the usage of Elm in the backend through Express",
   "main": "dist/index.js",
   "files": [
